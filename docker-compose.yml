@@ -1,19 +1,17 @@
-version: '3.8'
-
 services:
-  # Service pour la base de données (PostgreSQL)
-db:
-  image: mysql:8.0
-  container_name: exam_db
-  environment:
-    MYSQL_ROOT_PASSWORD: 2004super 
-    MYSQL_DATABASE: mbacke-projet            
-    MYSQL_USER: root              
-    MYSQL_PASSWORD: 2004super      
-  volumes:
-    - mysql_data:/var/lib/mysql        
-  ports:
-    - "3306:3306"                      
+  # Service pour la base de données (MySQL)
+  db:
+    image: mysql:8.0
+    container_name: exam_db
+    environment:
+      MYSQL_ROOT_PASSWORD: 2004super
+      MYSQL_DATABASE: mbacke-projet
+      MYSQL_USER: root
+      MYSQL_PASSWORD: 2004super
+    volumes:
+      - mysql_data:/var/lib/mysql
+    ports:
+      - "3306:3306"
 
   # Service pour le backend
   backend:
@@ -44,4 +42,4 @@ db:
 
 # Volume pour persister les données de la base de données
 volumes:
-  postgres_data:
+  mysql_data:
