@@ -1,0 +1,47 @@
+version: '3.8'
+
+services:
+  # Service pour la base de données (PostgreSQL)
+db:
+  image: mysql:8.0
+  container_name: exam_db
+  environment:
+    MYSQL_ROOT_PASSWORD: 2004super 
+    MYSQL_DATABASE: mbacke-projet            
+    MYSQL_USER: root              
+    MYSQL_PASSWORD: 2004super      
+  volumes:
+    - mysql_data:/var/lib/mysql        
+  ports:
+    - "3306:3306"                      
+
+  # Service pour le backend
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: exam_backend
+    environment:
+      DB_HOST: db
+      DB_USER: root
+      DB_PASSWORD: 2004super
+      DB_NAME: mbacke-projet
+    ports:
+      - "3000:3000"
+    depends_on:
+      - db
+
+  # Service pour le frontend
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: exam_frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+
+# Volume pour persister les données de la base de données
+volumes:
+  postgres_data:
