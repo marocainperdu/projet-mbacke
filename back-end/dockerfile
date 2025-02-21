@@ -1,5 +1,5 @@
 # Étape 1 : Utiliser une image de base Node.js
-FROM node:16
+FROM node:16 AS build
 
 # Étape 2 : Définir le répertoire de travail
 WORKDIR /app
@@ -13,8 +13,17 @@ RUN yarn install
 # Étape 5 : Copier le code source
 COPY . .
 
-# Étape 6 : Exposer le port 3000 (ou le port utilisé par votre backend)
-EXPOSE 3000
+# Étape 6 : Builder l'application
+RUN yarn build
 
-# Étape 7 : Démarrer l'application
-CMD ["yarn", "start"]
+# Étape 7 : Utiliser une image légère pour servir l'application
+FROM nginx:alpine
+
+# Étape 8 : Copier les fichiers buildés dans Nginx
+COPY --from=build /app/build /usr/share/nginx/html
+
+# Étape 9 : Exposer le port 80
+EXPOSE 80
+
+# Étape 10 : Démarrer Nginx
+CMD ["nginx", "-g", "daemon off;"]
