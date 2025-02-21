@@ -83,3 +83,15 @@ INSERT INTO `grades` (`submission_id`, `grade`, `comments`, `corrected_by`) VALU
 INSERT INTO `plagiarism_reports` (`submission_id`, `similarity_score`, `report_path`) VALUES
 (1, 12.3, '/uploads/rapport1.pdf'),
 (2, 8.5, '/uploads/rapport2.pdf');
+ -- Créer une procédure stockée pour générer le rapport mensuel
+CREATE PROCEDURE GenerateMonthlyExamReport AS BEGIN 
+-- Créer une table temporaire pour stocker les données du rapport 
+CREATE TABLE #MonthlyExams ( Month VARCHAR(10), NumberOfExams INT ); 
+-- Insérer le nombre d'examens créés par mois dans la table temporaire 
+INSERT INTO #MonthlyExams (Month, NumberOfExams) SELECT MONTH(created_at), COUNT(*) FROM exams WHERE created_at >= DATEADD(month, DATEDIFF(month, 0, GETDATE()), 0) AND created_at < DATEADD(month, DATEDIFF(month, 0, GETDATE()) + 1, 0) GROUP BY MONTH(created_at); 
+-- Sélectionner les données du rapport 
+SELECT * FROM #MonthlyExams;
+-- Supprimer la table temporaire
+DROP TABLE #MonthlyExams; END; GO
+-- Exécuter la procédure stockée 
+EXEC GenerateMonthlyExamReport; 
