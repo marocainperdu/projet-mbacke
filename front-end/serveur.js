@@ -27,7 +27,7 @@ db.connect((err) => {
 
 
 app.get("/jeledonneaprs", (req, res) => {
-    res.send("Bienvenue sur l'API backend !");
+    res.send("Bienvenue");
 });
 
 
@@ -35,7 +35,7 @@ app.get("after", (req, res) => {
     db.query("Requete souhaitee", (err, results) => {
         if (err) {
             console.error("Erreur", err);
-            res.status(500).json({ error: "Erreur serveur" });
+            res.status(500).json({ error: "Erreur" });
         } else {
             res.json(results);
         }
@@ -44,6 +44,6 @@ app.get("after", (req, res) => {
 
 
 app.listen(PORT, () => {
-    console.log(`Serveur backend démarré sur http://localhost:${PORT}`);
+    console.log(`Serveur démarré http://localhost:${PORT}`);
 });
 
