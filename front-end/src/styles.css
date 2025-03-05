@@ -1,0 +1,90 @@
+/* Global Styles */
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f4f4f4;
+    margin: 0;
+    padding: 0;
+}
+
+/* Conteneur principal */
+.container {
+    width: 80%;
+    max-width: 900px;
+    margin: 20px auto;
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+/* Titres */
+h1 {
+    text-align: center;
+    color: #333;
+}
+
+h2 {
+    color: #444;
+    margin-bottom: 10px;
+}
+
+/* Liste d'examens et résultats */
+.list {
+    list-style: none;
+    padding: 0;
+}
+
+.list li {
+    background: #e0e0e0;
+    padding: 10px;
+    margin: 5px 0;
+    border-radius: 5px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.list li a {
+    color: #007bff;
+    text-decoration: none;
+}
+
+.list li a:hover {
+    text-decoration: underline;
+}
+
+/* Formulaire d'upload */
+form {
+    margin-top: 15px;
+    padding: 10px;
+    background: #f8f8f8;
+    border-radius: 5px;
+}
+
+input, select {
+    width: 100%;
+    padding: 8px;
+    margin: 8px 0;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+}
+
+button {
+    width: 100%;
+    background: #007bff;
+    color: white;
+    padding: 10px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+button:hover {
+    background: #0056b3;
+}
+
+/* Message de confirmation */
+.success-message {
+    color: green;
+    margin-top: 10px;
+}

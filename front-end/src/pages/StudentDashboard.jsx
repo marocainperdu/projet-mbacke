@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import axios from "axios";
+import "../styles.css";
+
 
 const StudentDashboard = () => {
   const [student, setStudent] = useState({ name: "Étudiant" });
