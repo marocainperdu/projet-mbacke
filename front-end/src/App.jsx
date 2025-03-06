@@ -7,7 +7,6 @@ const App = () => {
     <Router> {/* Enveloppez l'application avec Router */}
       <Routes> {/* Utilisez Routes pour définir les routes */}
         <Route path="/" element={<Login />} /> {/* Route pour la page de connexion */}
-        <Route path="/dashboard" element={<Dashboard />} />
       </Routes>
     </Router>
   );
