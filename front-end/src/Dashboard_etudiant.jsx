@@ -163,7 +163,7 @@ const StudentDashboard = () => {
               )}
             </section>
 
-          <section style={styles.tableSection}>
+          {/* <section style={styles.tableSection}>
             <h2>🏆 Résultats</h2>
             <table style={styles.table}>
               <thead>
@@ -187,7 +187,41 @@ const StudentDashboard = () => {
                 )}
               </tbody>
             </table>
-          </section>
+          </section> */}
+
+<section style={styles.copiesSection}>
+              <h2>Copies soumises</h2>
+              <table style={styles.copiesTable}>
+                <thead style={styles.copiesTableHead}>
+                  <tr style={styles.copiesTableTrHover}>
+                    <th style={styles.copiesTableTh}>Étudiant</th>
+                    <th style={styles.copiesTableTh}>Date de soumission</th>
+                    <th style={styles.copiesTableTh}>Copie</th>
+                    <th style={styles.copiesTableTh}>Note (IA)</th>
+                    <th style={styles.copiesTableTh}>Note validée</th>
+                    <th style={styles.copiesTableTh}>Action</th>
+                  </tr>
+                </thead>
+               {/* <tbody>
+                  {copies.map((copie) => (
+                    <tr key={copie.id}>
+                      <td style={styles.copiesTableTd}>{copie.etudiant}</td>
+                      <td style={styles.copiesTableTd}>{copie.dateSoumission}</td>
+                      <td style={styles.copiesTableTd}>
+                        <a style={styles.copiesLink} href={copie.lienFichier} target="_blank" rel="noopener noreferrer">Télécharger</a>
+                      </td>
+                      <td style={styles.copiesTableTd}>{copie.noteIA}</td>
+                      <td style={styles.copiesTableTd}>
+                        <input type="number" defaultValue={copie.noteValidee} onChange={(e) => handleValidateNote(copie.id, e.target.value)} />
+                      </td>
+                      <td style={styles.copiesTableTd}>
+                        <button onClick={() => handleValidateNote(copie.id, copie.noteValidee)}>Valider</button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>*/}
+              </table>
+            </section>
         </main>
       </div>
     </div>
@@ -195,16 +229,13 @@ const StudentDashboard = () => {
 };
 
 
-
 const styles = {
   container: {
-    fontFamily: "Arial, sans-serif",
-    height: "100vh",
-    display: "flex",
-    flexDirection: "column",
-   
+    fontFamily: 'Arial, sans-serif',
+    height: '100vh',
+    display: 'flex',
+    flexDirection: 'column',
   },
-  
   header: {
     backgroundColor: '#3498db',
     color: 'white',
@@ -212,26 +243,42 @@ const styles = {
     textAlign: 'center',
   },
   content: {
-    display: "flex",
+    display: 'flex',
     flex: 1,
-    // padding: "2%",
-    // justifyContent: "center",
   },
   sidebar: {
-    width: "250px",
-    backgroundColor: "#f0f0f0",
-    padding: "20px",
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "center",
+    width: '250px',
+    backgroundColor: '#f0f0f0',
+    padding: '20px',
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+  },
+  studentInfo: {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+  },
+  avatar: {
+    width: '100px',
+    height: '100px',
+    borderRadius: '50%',
+    marginBottom: '10px',
   },
   mainContent: {
     flex: 1,
-    padding: "10px",
-    display: "flex",
-    flexDirection: "column",
-    width: "100%",
+    padding: '10px',
+    display: 'flex',
+    flexDirection: 'column',
+    width: '100%', // Assure que mainContent prend toute la largeur
   },
+
+  sectionsContainer: {
+    display: 'flex',
+    justifyContent: 'flex-end', // Aligne la section des copies à la fin
+    width: '100%',
+  },
+
   uploadSection: {
     border: '1px solid #ccc',
     padding: '8px',
@@ -242,69 +289,177 @@ const styles = {
     marginTop: '20px',
     width: '45%', // Ajuste la largeur pour laisser de l'espace à l'autre section
   },
-  tableSection: {
-    backgroundColor: "white",
-    padding: "1.5rem",
-    borderRadius: "0.5rem",
-    width: "100%",
-    maxWidth: "70vw",
-    margin: "2rem auto",
-  },
-  table: {
-    width: "100%",
-    borderCollapse: "collapse",
-    marginTop: "1rem",
-  },
-  tableHeader: {
-    backgroundColor: "#3498db",
-    color: "white",
-    padding: "1rem",
-    textAlign: "left",
-  },
-  tableCell: {
-    padding: "1rem",
-    borderBottom: "1px solid #ddd",
-  },
-  link: {
-    color: "#3498db",
-    textDecoration: "none",
-    fontWeight: "bold",
-  },
-  successMessage: {
-    color: "green",
-    marginTop: "1rem",
-  },
-  avatar: {
-    width: "80%",
-    maxWidth: "100px",
-    height: "auto",
-    borderRadius: "50%",
-    marginBottom: "10px",
-    display: "block",
-  },
-
-  // ✅ Style pour le bouton Déconnexion
-  logoutButton: { 
-    marginTop: "225px",
-    padding: "10px 20px",
-    backgroundColor: "#e74c3c",
-    color: "white",
-    border: "none",
-    borderRadius: "5px",
-    cursor: "pointer",
-  },
-
-  // ✅ Style pour le bouton Soumettre un devoir
   uploadButton: {
-    marginTop: "15px",
-    padding: "10px 20px",
-    backgroundColor: "#2ecc71",
-    color: "white",
-    border: "none",
-    borderRadius: "5px",
-    cursor: "pointer",
+    marginTop: '15px',
+    padding: '10px 20px',
+    backgroundColor: '#2ecc71',
+    color: 'white',
+    border: 'none',
+    borderRadius: '5px',
+    cursor: 'pointer',
   },
-};
+
+  logoutButton: { // Style pour le bouton de déconnexion
+    marginTop: '225px',
+    padding: '10px 20px',
+    backgroundColor: '#e74c3c',
+    color: 'white',
+    border: 'none',
+    borderRadius: '5px',
+    cursor: 'pointer',
+  },
+
+
+  copiesSection: {
+    border: '1px solid #ddd',
+    padding: '20px',
+    borderRadius: '8px',
+    boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
+    marginTop: '50px',
+    marginLeft: '20px',
+  },
+
+  copiesTableTh: {
+    padding: '12px 20px',
+    textAlign: 'left',
+    borderBottom: '1px solid #ddd',
+    color: '#333', // Couleur du texte gris foncé
+  },
+
+  copiesTable: {
+    width: '100%',
+    borderCollapse: 'collapse',
+    marginTop: '10px',
+  },
+
+  copiesTableHead: {
+    backgroundColor: '#f2f2f2',
+  },
+
+  copiesTableTrHover: {
+    '&:hover': {
+      backgroundColor: '#f9f9f9',
+    },
+  },
+
+  statsSection: {
+    border: (stats) => (stats ? '1px solid #ddd' : 'none'), // Bordures conditionnelles
+    padding: '20px',
+    borderRadius: '8px',
+    boxShadow: (stats) => (stats ? '0 2px 4px rgba(0, 0, 0, 0.1)' : 'none'), // Ombre conditionnelle
+    marginTop: '20px',
+    marginLeft: '250px',
+    width: '50%',
+  },};
+// const styles = {
+//   container: {
+//     fontFamily: "Arial, sans-serif",
+//     height: "100vh",
+//     display: "flex",
+//     flexDirection: "column",
+   
+//   },
+  
+//   header: {
+//     backgroundColor: '#3498db',
+//     color: 'white',
+//     padding: '20px',
+//     textAlign: 'center',
+//   },
+//   content: {
+//     display: "flex",
+//     flex: 1,
+//     // padding: "2%",
+//     // justifyContent: "center",
+//   },
+//   sidebar: {
+//     width: "250px",
+//     backgroundColor: "#f0f0f0",
+//     padding: "20px",
+//     display: "flex",
+//     flexDirection: "column",
+//     alignItems: "center",
+//   },
+//   mainContent: {
+//     flex: 1,
+//     padding: "10px",
+//     display: "flex",
+//     flexDirection: "column",
+//     width: "100%",
+//   },
+//   uploadSection: {
+//     border: '1px solid #ccc',
+//     padding: '8px',
+//     borderRadius: '8px',
+//     boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
+//     marginRight: '150px',
+//     marginLeft: '20px',
+//     marginTop: '20px',
+//     width: '45%', // Ajuste la largeur pour laisser de l'espace à l'autre section
+//   },
+//   tableSection: {
+//     backgroundColor: "white",
+//     padding: "1.5rem",
+//     borderRadius: "0.5rem",
+//     width: "100%",
+//     maxWidth: "70vw",
+//     margin: "2rem auto",
+//   },
+//   table: {
+//     width: "100%",
+//     borderCollapse: "collapse",
+//     marginTop: "1rem",
+//   },
+//   tableHeader: {
+//     backgroundColor: "#3498db",
+//     color: "white",
+//     padding: "1rem",
+//     textAlign: "left",
+//   },
+//   tableCell: {
+//     padding: "1rem",
+//     borderBottom: "1px solid #ddd",
+//   },
+//   link: {
+//     color: "#3498db",
+//     textDecoration: "none",
+//     fontWeight: "bold",
+//   },
+//   successMessage: {
+//     color: "green",
+//     marginTop: "1rem",
+//   },
+//   avatar: {
+//     width: "80%",
+//     maxWidth: "100px",
+//     height: "auto",
+//     borderRadius: "50%",
+//     marginBottom: "10px",
+//     display: "block",
+//   },
+
+//   // ✅ Style pour le bouton Déconnexion
+//   logoutButton: { 
+//     marginTop: "225px",
+//     padding: "10px 20px",
+//     backgroundColor: "#e74c3c",
+//     color: "white",
+//     border: "none",
+//     borderRadius: "5px",
+//     cursor: "pointer",
+//   },
+
+//   // ✅ Style pour le bouton Soumettre un devoir
+//   uploadButton: {
+//     marginTop: "15px",
+//     padding: "10px 20px",
+//     backgroundColor: "#2ecc71",
+//     color: "white",
+//     border: "none",
+//     borderRadius: "5px",
+//     cursor: "pointer",
+//   },
+// };
 
 
 
