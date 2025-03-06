@@ -1,35 +1,21 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import React from 'react';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'; // Importez les composants de routage
+import Login from './Login';
+import Register from './Register';
+import Dashboard from './Dashboard'; // Importer le Dashboard
+import Welcome from './Welcome'; // Importez le nouveau composant Welcome
 
-function App() {
-  const [count, setCount] = useState(0)
-
+const App = () => {
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
-}
+    <Router> {/* Enveloppez l'application avec Router */}
+      <Routes> {/* Utilisez Routes pour définir les routes */}
+        <Route path="/" element={<Login />} /> {/* Route pour la page de connexion */}
+        <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/register" element={<Register />} /> {/* Ajoutez la route pour Register */}
+        <Route path="/welcome" element={<Welcome />} /> {/* Route pour la page de bienvenue */}
+      </Routes>
+    </Router>
+  );
+};
 
-export default App
+export default App;
