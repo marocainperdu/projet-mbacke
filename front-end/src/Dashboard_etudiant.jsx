@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { useNavigate , Link } from 'react-router-dom';
 import axios from 'axios';
+
 
 const StudentDashboard = () => {
   const student = {
@@ -9,11 +10,16 @@ const StudentDashboard = () => {
     email: 'etudiant@example.com',
   };
 
+  const navigate = useNavigate();
   const [exams, setExams] = useState([]);
   const [results, setResults] = useState([]);
-  const [selectedFile, setSelectedFile] = useState(null);
+  const [file, setFile] = useState(null);
+  const [fileName, setFileName] = useState('');
+  // const [selectedFile, setSelectedFile] = useState(null);
   const [uploadMessage, setUploadMessage] = useState("");
   const [selectedExam, setSelectedExam] = useState("");
+  const [stats, setStats] = useState(null);
+  const [copies, setCopies] = useState([]);
 
   useEffect(() => {
     axios.get("http://localhost:5000/api/exams")
@@ -25,42 +31,63 @@ const StudentDashboard = () => {
       .catch((err) => console.error("Erreur API results :", err));
   }, []);
 
-  const handleFileChange = (event) => {
-    setSelectedFile(event.target.files[0]);
+  // const handleFileChange = (event) => {
+  //   setSelectedFile(event.target.files[0]);
+  // };
+
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    navigate('/');
+  };
+  const handleFileChange = (e) => {
+    const selectedFile = e.target.files[0];
+    setFile(selectedFile);
+    setFileName(selectedFile ? selectedFile.name : '');
   };
 
   const handleExamChange = (event) => {
     setSelectedExam(event.target.value);
   };
 
-  const handleUpload = async (event) => {
-    event.preventDefault();
-
-    if (!selectedFile || !selectedExam) {
-      setUploadMessage("Veuillez sélectionner un fichier et un examen.");
-      return;
-    }
-
-    const formData = new FormData();
-    formData.append("file", selectedFile);
-    formData.append("student_id", 2);
-    formData.append("exam_id", selectedExam);
-
-    try {
-      const response = await axios.post("http://localhost:5000/api/upload", formData, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-      });
-
-      setUploadMessage(response.data.message);
-      setSelectedFile(null);
-      setSelectedExam("");
-    } catch (error) {
-      console.error("Erreur lors de l'upload :", error);
-      setUploadMessage("Échec de l'envoi du fichier.");
+  const handleUpload = () => {
+    if (file) {
+      // ... (Envoyer le fichier à l'API) ...
+      alert(`Fichier "${fileName}" uploadé avec succès!`);
+      setFile(null);
+      setFileName('');
+    } else {
+      alert('Veuillez sélectionner un fichier.');
     }
   };
+
+  // const handleUpload = async (event) => {
+  //   event.preventDefault();
+
+  //   if (!selectedFile || !selectedExam) {
+  //     setUploadMessage("Veuillez sélectionner un fichier et un examen.");
+  //     return;
+  //   }
+
+  //   const formData = new FormData();
+  //   formData.append("file", selectedFile);
+  //   formData.append("student_id", 2);
+  //   formData.append("exam_id", selectedExam);
+
+  //   try {
+  //     const response = await axios.post("http://localhost:5000/api/upload", formData, {
+  //       headers: {
+  //         "Content-Type": "multipart/form-data",
+  //       },
+  //     });
+
+  //     setUploadMessage(response.data.message);
+  //     setSelectedFile(null);
+  //     setSelectedExam("");
+  //   } catch (error) {
+  //     console.error("Erreur lors de l'upload :", error);
+  //     setUploadMessage("Échec de l'envoi du fichier.");
+  //   }
+  // };
 
   return (
     <div style={styles.container}>
@@ -74,13 +101,16 @@ const StudentDashboard = () => {
             <h2 style={{ color: 'black' }}>{student.firstName} {student.lastName}</h2>
             <p style={{ color: 'black' }}>{student.email}</p>
           </div>
-          <button style={styles.logoutButton}>Déconnexion</button>
+          <button onClick={handleLogout} style={styles.logoutButton}>Déconnexion</button>
         </aside>
         <main style={styles.mainContent}>
           <div style={styles.sectionsContainer}>
             <section style={styles.uploadSection}>
               <h2>📤 Soumettre un devoir</h2>
-              <form onSubmit={handleUpload}>
+              <input type="file" onChange={handleFileChange} />
+              {fileName && <p>Fichier sélectionné: {fileName}</p>}
+              <button onClick={handleUpload} style={styles.uploadButton}>Télécharger</button>
+              {/* <form onSubmit={handleUpload}>
                 <label>Sélectionnez un examen :</label>
                 <select value={selectedExam} onChange={handleExamChange} required style={styles.input}>
                   <option value="">-- Choisir un examen --</option>
@@ -91,11 +121,11 @@ const StudentDashboard = () => {
                 <input type="file" onChange={handleFileChange} required style={styles.input} />
                 <button type="submit" style={styles.uploadButton}>Télécharger</button>
               </form>
-              {uploadMessage && <p style={styles.successMessage}>{uploadMessage}</p>}
-            </section>
+              {uploadMessage && <p style={styles.successMessage}>{uploadMessage}</p>}*/}
+            </section> 
           </div>
 
-          <section style={styles.tableSection}>
+          {/* <section style={styles.tableSection}>
             <h2>📚 Examens Disponibles</h2>
             <table style={styles.table}>
               <thead>
@@ -119,7 +149,19 @@ const StudentDashboard = () => {
                 )}
               </tbody>
             </table>
-          </section>
+          </section> */}
+          <section style={styles.statsSection}>
+              {stats ? (
+                <>
+                  <h2>Statistiques</h2>
+                  <p>Moyenne: {stats.moyenne}</p>
+                  <p>Distribution des notes: {stats.distribution}</p>
+                  {/* ... autres statistiques ... */}
+                </>
+              ) : (
+                <p style={{ color: '#ff3333', marginTop:'50px' } } >Aucune note n'est encore enregistrée !! </p>
+              )}
+            </section>
 
           <section style={styles.tableSection}>
             <h2>🏆 Résultats</h2>
@@ -152,14 +194,17 @@ const StudentDashboard = () => {
   );
 };
 
+
+
 const styles = {
   container: {
-    fontFamily: 'Arial, sans-serif',
-    height: '100vh',
-    display: 'flex',
-    flexDirection: 'column',
-    backgroundColor: '#1e1e1e',
+    fontFamily: "Arial, sans-serif",
+    height: "100vh",
+    display: "flex",
+    flexDirection: "column",
+   
   },
+  
   header: {
     backgroundColor: '#3498db',
     color: 'white',
@@ -167,51 +212,102 @@ const styles = {
     textAlign: 'center',
   },
   content: {
-    display: 'flex',
+    display: "flex",
     flex: 1,
+    // padding: "2%",
+    // justifyContent: "center",
   },
   sidebar: {
-    width: '250px',
-    backgroundColor: '#f0f0f0',
-    padding: '20px',
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
+    width: "250px",
+    backgroundColor: "#f0f0f0",
+    padding: "20px",
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
   },
-  avatar: {
-    width: '100px',
-    height: '100px',
-    borderRadius: '50%',
-    marginBottom: '10px',
+  mainContent: {
+    flex: 1,
+    padding: "10px",
+    display: "flex",
+    flexDirection: "column",
+    width: "100%",
   },
-  logoutButton: {
-    marginTop: '225px',
-    padding: '10px 20px',
-    backgroundColor: '#e74c3c',
-    color: 'white',
-    border: 'none',
-    borderRadius: '5px',
-    cursor: 'pointer',
-  },
-  uploadButton: {
-    marginTop: '15px',
-    padding: '10px 20px',
-    backgroundColor: '#2ecc71',
-    color: 'white',
-    border: 'none',
-    borderRadius: '5px',
-    cursor: 'pointer',
+  uploadSection: {
+    border: '1px solid #ccc',
+    padding: '8px',
+    borderRadius: '8px',
+    boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
+    marginRight: '150px',
+    marginLeft: '20px',
+    marginTop: '20px',
+    width: '45%', // Ajuste la largeur pour laisser de l'espace à l'autre section
   },
   tableSection: {
-    marginTop: '20px',
-    padding: '20px',
-    backgroundColor: '#ffffff',
-    borderRadius: '8px',
+    backgroundColor: "white",
+    padding: "1.5rem",
+    borderRadius: "0.5rem",
+    width: "100%",
+    maxWidth: "70vw",
+    margin: "2rem auto",
   },
   table: {
-    width: '100%',
-    borderCollapse: 'collapse',
+    width: "100%",
+    borderCollapse: "collapse",
+    marginTop: "1rem",
+  },
+  tableHeader: {
+    backgroundColor: "#3498db",
+    color: "white",
+    padding: "1rem",
+    textAlign: "left",
+  },
+  tableCell: {
+    padding: "1rem",
+    borderBottom: "1px solid #ddd",
+  },
+  link: {
+    color: "#3498db",
+    textDecoration: "none",
+    fontWeight: "bold",
+  },
+  successMessage: {
+    color: "green",
+    marginTop: "1rem",
+  },
+  avatar: {
+    width: "80%",
+    maxWidth: "100px",
+    height: "auto",
+    borderRadius: "50%",
+    marginBottom: "10px",
+    display: "block",
+  },
+
+  // ✅ Style pour le bouton Déconnexion
+  logoutButton: { 
+    marginTop: "225px",
+    padding: "10px 20px",
+    backgroundColor: "#e74c3c",
+    color: "white",
+    border: "none",
+    borderRadius: "5px",
+    cursor: "pointer",
+  },
+
+  // ✅ Style pour le bouton Soumettre un devoir
+  uploadButton: {
+    marginTop: "15px",
+    padding: "10px 20px",
+    backgroundColor: "#2ecc71",
+    color: "white",
+    border: "none",
+    borderRadius: "5px",
+    cursor: "pointer",
   },
 };
+
+
+
+
 
 export default StudentDashboard;
