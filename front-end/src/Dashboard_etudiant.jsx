@@ -460,6 +460,10 @@ const styles = {
 //     cursor: "pointer",
 //   },
 // };
+css
+body {
+   padding: 0;
+}
 
 
 
