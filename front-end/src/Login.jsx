@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom'; // Importez useNavigate
+import { useNavigate ,  Link} from 'react-router-dom'; // Importez useNavigate
 
 const Login = () => {
   const [email, setEmail] = useState('');
@@ -61,9 +61,7 @@ const Login = () => {
 
         </form>
 
-        <p>Pas de compte ?</p> 
-{/*
-        <p>Pas de compte ? <Link to="/register">Inscrivez-vous</Link></p>  */}
+        <p style={{ color: 'black', marginLeft:'200px', }}>Pas de compte ? <Link to="/register">S'incrire</Link></p>  
 
       </div>
       
