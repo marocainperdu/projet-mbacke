@@ -9,7 +9,8 @@ const StudentDashboard = () => {
     lastName: 'DIALLO',
     email: 'etudiant@example.com',
   };
-
+ 
+    
   const navigate = useNavigate();
   const [exams, setExams] = useState([]);
   const [results, setResults] = useState([]);
@@ -122,8 +123,21 @@ const StudentDashboard = () => {
                 <button type="submit" style={styles.uploadButton}>Télécharger</button>
               </form>
               {uploadMessage && <p style={styles.successMessage}>{uploadMessage}</p>}*/}
-            </section> 
-          </div>
+             </section> 
+             <section style={styles.statsSection}>
+              {stats ? (
+                <>
+                  <h2>Statistiques</h2>
+                  <p>Moyenne: {stats.moyenne}</p>
+                  <p>Distribution des notes: {stats.distribution}</p>
+                  {/* ... autres statistiques ... */}
+                </>
+              ) : (
+                <p style={{ color: '#ff3333', marginTop:'50px' } } >Aucune note n'est encore enregistrée !! </p>
+              )}
+            </section>
+             
+          </div> 
 
           {/* <section style={styles.tableSection}>
             <h2>📚 Examens Disponibles</h2>
@@ -150,19 +164,7 @@ const StudentDashboard = () => {
               </tbody>
             </table>
           </section> */}
-          <section style={styles.statsSection}>
-              {stats ? (
-                <>
-                  <h2>Statistiques</h2>
-                  <p>Moyenne: {stats.moyenne}</p>
-                  <p>Distribution des notes: {stats.distribution}</p>
-                  {/* ... autres statistiques ... */}
-                </>
-              ) : (
-                <p style={{ color: '#ff3333', marginTop:'50px' } } >Aucune note n'est encore enregistrée !! </p>
-              )}
-            </section>
-
+         
           {/* <section style={styles.tableSection}>
             <h2>🏆 Résultats</h2>
             <table style={styles.table}>
@@ -189,37 +191,19 @@ const StudentDashboard = () => {
             </table>
           </section> */}
 
-<section style={styles.copiesSection}>
-              <h2>Copies soumises</h2>
+            <section style={styles.copiesSection}>
+              <h2>vos notes</h2>
               <table style={styles.copiesTable}>
                 <thead style={styles.copiesTableHead}>
                   <tr style={styles.copiesTableTrHover}>
-                    <th style={styles.copiesTableTh}>Étudiant</th>
+                    <th style={styles.copiesTableTh}>professeur</th>
                     <th style={styles.copiesTableTh}>Date de soumission</th>
                     <th style={styles.copiesTableTh}>Copie</th>
-                    <th style={styles.copiesTableTh}>Note (IA)</th>
-                    <th style={styles.copiesTableTh}>Note validée</th>
+                    <th style={styles.copiesTableTh}>Note</th>
+                    <th style={styles.copiesTableTh}>Commentaire</th>
                     <th style={styles.copiesTableTh}>Action</th>
                   </tr>
                 </thead>
-               {/* <tbody>
-                  {copies.map((copie) => (
-                    <tr key={copie.id}>
-                      <td style={styles.copiesTableTd}>{copie.etudiant}</td>
-                      <td style={styles.copiesTableTd}>{copie.dateSoumission}</td>
-                      <td style={styles.copiesTableTd}>
-                        <a style={styles.copiesLink} href={copie.lienFichier} target="_blank" rel="noopener noreferrer">Télécharger</a>
-                      </td>
-                      <td style={styles.copiesTableTd}>{copie.noteIA}</td>
-                      <td style={styles.copiesTableTd}>
-                        <input type="number" defaultValue={copie.noteValidee} onChange={(e) => handleValidateNote(copie.id, e.target.value)} />
-                      </td>
-                      <td style={styles.copiesTableTd}>
-                        <button onClick={() => handleValidateNote(copie.id, copie.noteValidee)}>Valider</button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>*/}
               </table>
             </section>
         </main>
@@ -230,16 +214,18 @@ const StudentDashboard = () => {
 
 
 const styles = {
+
   container: {
     fontFamily: 'Arial, sans-serif',
     height: '100vh',
     display: 'flex',
+    width: '100%',
     flexDirection: 'column',
   },
   header: {
     backgroundColor: '#3498db',
     color: 'white',
-    padding: '20px',
+   padding: '20px',
     textAlign: 'center',
   },
   content: {
@@ -350,119 +336,7 @@ const styles = {
     marginTop: '20px',
     marginLeft: '250px',
     width: '50%',
-  },};
-// const styles = {
-//   container: {
-//     fontFamily: "Arial, sans-serif",
-//     height: "100vh",
-//     display: "flex",
-//     flexDirection: "column",
-   
-//   },
-  
-//   header: {
-//     backgroundColor: '#3498db',
-//     color: 'white',
-//     padding: '20px',
-//     textAlign: 'center',
-//   },
-//   content: {
-//     display: "flex",
-//     flex: 1,
-//     // padding: "2%",
-//     // justifyContent: "center",
-//   },
-//   sidebar: {
-//     width: "250px",
-//     backgroundColor: "#f0f0f0",
-//     padding: "20px",
-//     display: "flex",
-//     flexDirection: "column",
-//     alignItems: "center",
-//   },
-//   mainContent: {
-//     flex: 1,
-//     padding: "10px",
-//     display: "flex",
-//     flexDirection: "column",
-//     width: "100%",
-//   },
-//   uploadSection: {
-//     border: '1px solid #ccc',
-//     padding: '8px',
-//     borderRadius: '8px',
-//     boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
-//     marginRight: '150px',
-//     marginLeft: '20px',
-//     marginTop: '20px',
-//     width: '45%', // Ajuste la largeur pour laisser de l'espace à l'autre section
-//   },
-//   tableSection: {
-//     backgroundColor: "white",
-//     padding: "1.5rem",
-//     borderRadius: "0.5rem",
-//     width: "100%",
-//     maxWidth: "70vw",
-//     margin: "2rem auto",
-//   },
-//   table: {
-//     width: "100%",
-//     borderCollapse: "collapse",
-//     marginTop: "1rem",
-//   },
-//   tableHeader: {
-//     backgroundColor: "#3498db",
-//     color: "white",
-//     padding: "1rem",
-//     textAlign: "left",
-//   },
-//   tableCell: {
-//     padding: "1rem",
-//     borderBottom: "1px solid #ddd",
-//   },
-//   link: {
-//     color: "#3498db",
-//     textDecoration: "none",
-//     fontWeight: "bold",
-//   },
-//   successMessage: {
-//     color: "green",
-//     marginTop: "1rem",
-//   },
-//   avatar: {
-//     width: "80%",
-//     maxWidth: "100px",
-//     height: "auto",
-//     borderRadius: "50%",
-//     marginBottom: "10px",
-//     display: "block",
-//   },
-
-//   // ✅ Style pour le bouton Déconnexion
-//   logoutButton: { 
-//     marginTop: "225px",
-//     padding: "10px 20px",
-//     backgroundColor: "#e74c3c",
-//     color: "white",
-//     border: "none",
-//     borderRadius: "5px",
-//     cursor: "pointer",
-//   },
-
-//   // ✅ Style pour le bouton Soumettre un devoir
-//   uploadButton: {
-//     marginTop: "15px",
-//     padding: "10px 20px",
-//     backgroundColor: "#2ecc71",
-//     color: "white",
-//     border: "none",
-//     borderRadius: "5px",
-//     cursor: "pointer",
-//   },
-// };
-
-
-
-
+  },
+};
 
 export default StudentDashboard;
