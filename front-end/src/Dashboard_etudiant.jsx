@@ -336,7 +336,119 @@ const styles = {
     marginTop: '20px',
     marginLeft: '250px',
     width: '50%',
-  },
-};
+  },};
+// const styles = {
+//   container: {
+//     fontFamily: "Arial, sans-serif",
+//     height: "100vh",
+//     display: "flex",
+//     flexDirection: "column",
+   
+//   },
+  
+//   header: {
+//     backgroundColor: '#3498db',
+//     color: 'white',
+//     padding: '20px',
+//     textAlign: 'center',
+//   },
+//   content: {
+//     display: "flex",
+//     flex: 1,
+//     // padding: "2%",
+//     // justifyContent: "center",
+//   },
+//   sidebar: {
+//     width: "250px",
+//     backgroundColor: "#f0f0f0",
+//     padding: "20px",
+//     display: "flex",
+//     flexDirection: "column",
+//     alignItems: "center",
+//   },
+//   mainContent: {
+//     flex: 1,
+//     padding: "10px",
+//     display: "flex",
+//     flexDirection: "column",
+//     width: "100%",
+//   },
+//   uploadSection: {
+//     border: '1px solid #ccc',
+//     padding: '8px',
+//     borderRadius: '8px',
+//     boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
+//     marginRight: '150px',
+//     marginLeft: '20px',
+//     marginTop: '20px',
+//     width: '45%', // Ajuste la largeur pour laisser de l'espace à l'autre section
+//   },
+//   tableSection: {
+//     backgroundColor: "white",
+//     padding: "1.5rem",
+//     borderRadius: "0.5rem",
+//     width: "100%",
+//     maxWidth: "70vw",
+//     margin: "2rem auto",
+//   },
+//   table: {
+//     width: "100%",
+//     borderCollapse: "collapse",
+//     marginTop: "1rem",
+//   },
+//   tableHeader: {
+//     backgroundColor: "#3498db",
+//     color: "white",
+//     padding: "1rem",
+//     textAlign: "left",
+//   },
+//   tableCell: {
+//     padding: "1rem",
+//     borderBottom: "1px solid #ddd",
+//   },
+//   link: {
+//     color: "#3498db",
+//     textDecoration: "none",
+//     fontWeight: "bold",
+//   },
+//   successMessage: {
+//     color: "green",
+//     marginTop: "1rem",
+//   },
+//   avatar: {
+//     width: "80%",
+//     maxWidth: "100px",
+//     height: "auto",
+//     borderRadius: "50%",
+//     marginBottom: "10px",
+//     display: "block",
+//   },
+
+//   // ✅ Style pour le bouton Déconnexion
+//   logoutButton: { 
+//     marginTop: "225px",
+//     padding: "10px 20px",
+//     backgroundColor: "#e74c3c",
+//     color: "white",
+//     border: "none",
+//     borderRadius: "5px",
+//     cursor: "pointer",
+//   },
+
+//   // ✅ Style pour le bouton Soumettre un devoir
+//   uploadButton: {
+//     marginTop: "15px",
+//     padding: "10px 20px",
+//     backgroundColor: "#2ecc71",
+//     color: "white",
+//     border: "none",
+//     borderRadius: "5px",
+//     cursor: "pointer",
+//   },
+// };
+
+
+
+
 
 export default StudentDashboard;
