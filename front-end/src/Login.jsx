@@ -1,79 +1,96 @@
-import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import * as React from 'react';
+import { AppProvider } from '@toolpad/core/AppProvider';
+import { SignInPage } from '@toolpad/core/SignInPage';
+import { useTheme, createTheme } from '@mui/material/styles';
+import { CssBaseline, Box } from '@mui/material';
 import { Client, Account } from 'appwrite';
-import { TextField, Button, Container, Typography, Paper } from '@mui/material';
+import { useNavigate } from 'react-router-dom';  // Importer useNavigate
 
-const client = new Client();
-client.setEndpoint('https://appwrite.momokabil.duckdns.org/v1')
-      .setProject('67cd9f540022aae0f0f5');
+const theme = createTheme({
+  palette: {
+    mode: 'dark',
+    primary: {
+      main: '#1976d2',
+    },
+  },
+});
 
-const account = new Account(client);
-
-const Login = () => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
-  const navigate = useNavigate();
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setError('');
-    try {
-      // Vérifier s'il y a une session active et la supprimer
-      const currentSession = await account.getSession('current').catch(() => null);
-      if (currentSession) {
-        await account.deleteSession('current'); // Supprimer la session active
-      }
-
-      // Créer une nouvelle session
-      const session = await account.createEmailPasswordSession(email, password);
-      localStorage.setItem('jwt', session.secret); // Stocker le token JWT
-      navigate('/dashboard');
-    } catch (err) {
-      setError('Email ou mot de passe incorrect.');
-    }
-  };
-
-  return (
-    <Container component="main" maxWidth="sm" sx={{ display: 'flex', height: '100vh', alignItems: 'center', justifyContent: 'center' }}>
-      <Paper elevation={3} sx={{ padding: 4, width: '100%', maxWidth: 400 }}>
-        <Typography variant="h4" color="primary" align="center" gutterBottom>
-          Connexion
-        </Typography>
-        {error && (
-          <Typography color="error" align="center">
-            {error}
-          </Typography>
-        )}
-        <form onSubmit={handleSubmit}>
-          <TextField
-            fullWidth
-            margin="normal"
-            label="Email"
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-          />
-          <TextField
-            fullWidth
-            margin="normal"
-            label="Mot de passe"
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-          />
-          <Button type="submit" fullWidth variant="contained" color="primary" sx={{ mt: 2 }}>
-            Se connecter
-          </Button>
-        </form>
-        <Typography align="center" sx={{ mt: 2 }}>
-          Pas de compte ? <Link to="/register">S'inscrire</Link>
-        </Typography>
-      </Paper>
-    </Container>
-  );
+const BRANDING = {
+  logo: <img src="https://mui.com/static/logo.svg" alt="Logo" style={{ height: 24 }} />,
+  title: 'Ma Super Application',
 };
 
-export default Login;
+const client = new Client();
+client.setEndpoint('https://appwrite.momokabil.duckdns.org/v1').setProject('67cd9f540022aae0f0f5');
+const account = new Account(client);
+
+const signIn = async (provider, formData, navigate) => {
+  const email = formData?.get('email');
+  const password = formData?.get('password');
+
+  try {
+    // Vérifier si une session existe déjà
+    const currentUser = await account.get(); // Récupérer les informations de l'utilisateur connecté
+
+    if (currentUser) {
+      // Si l'utilisateur est déjà connecté, on se contente de se connecter avec la session existante
+      console.log('Utilisateur déjà connecté:', currentUser);
+      navigate('/dashboard');  // Redirige l'utilisateur vers le tableau de bord
+      return { type: 'CredentialsSignin', message: 'Connexion réussie avec la session existante.' };
+    } else {
+      // Sinon, on crée une nouvelle session avec les identifiants fournis
+      const response = await account.createEmailPasswordSession(email, password);
+      console.log('Connexion réussie:', response);
+      navigate('/dashboard');  // Redirige vers le tableau de bord après la connexion réussie
+      return { type: 'CredentialsSignin', message: 'Nouvelle session créée et connexion réussie.' };
+    }
+  } catch (error) {
+    console.error('Erreur de connexion:', error);
+    if (error.code === 401) {
+      // Erreur d'authentification (identifiants invalides)
+      return { type: 'CredentialsSignin', error: 'Identifiants invalides.' };
+    } else {
+      // Autres erreurs
+      return { type: 'CredentialsSignin', error: 'Une erreur est survenue. Veuillez réessayer.' };
+    }
+  }
+};
+
+export default function BrandingSignInPage() {
+  const theme = useTheme();
+  const navigate = useNavigate();  // Utiliser useNavigate pour la redirection
+
+  React.useEffect(() => {
+    document.body.style.display = 'flex';
+    document.body.style.justifyContent = 'center';
+    document.body.style.alignItems = 'center';
+    document.body.style.minHeight = '100vh';
+    document.body.style.flexDirection = 'column';
+    document.body.style.margin = '0';
+  }, []);
+
+  return (
+    <AppProvider branding={BRANDING} theme={theme}>
+      <CssBaseline />
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          minHeight: '100vh',
+          padding: 2,
+          flexDirection: 'column',
+        }}
+      >
+        <SignInPage
+          signIn={(provider, formData) => signIn(provider, formData, navigate)}  // Passer navigate à signIn
+          providers={[{ id: 'credentials', name: 'Email et Mot de Passe' }]}
+          slotProps={{
+            emailField: { autoFocus: true, variant: 'outlined', color: 'primary' },
+            form: { noValidate: true, sx: { display: 'flex', flexDirection: 'column', gap: 2, marginBottom: 2 } },
+          }}
+        />
+      </Box>
+    </AppProvider>
+  );
+}
