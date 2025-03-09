@@ -1,87 +1,150 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Client, Account } from 'appwrite';
-import { Container, Box, Grid, Typography, Paper, Avatar, IconButton, Drawer, List, ListItem, ListItemIcon, ListItemText } from '@mui/material';
-import LogoutIcon from '@mui/icons-material/Logout'; // Icône de déconnexion
-import MenuIcon from '@mui/icons-material/Menu'; // Icône du menu
+import * as React from 'react';
+import { extendTheme, styled } from '@mui/material/styles';
+import DashboardIcon from '@mui/icons-material/Dashboard';
+import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
+import BarChartIcon from '@mui/icons-material/BarChart';
+import DescriptionIcon from '@mui/icons-material/Description';
+import LayersIcon from '@mui/icons-material/Layers';
+import { AppProvider } from '@toolpad/core/AppProvider';
+import { DashboardLayout } from '@toolpad/core/DashboardLayout';
+import { PageContainer } from '@toolpad/core/PageContainer';
+import Grid from '@mui/material/Grid';
 
-const client = new Client();
-client.setEndpoint('https://appwrite.momokabil.duckdns.org/v1')
-      .setProject('67cd9f540022aae0f0f5');
+const NAVIGATION = [
+  {
+    kind: 'header',
+    title: 'Main items',
+  },
+  {
+    segment: 'dashboard',
+    title: 'Dashboard',
+    icon: <DashboardIcon />,
+  },
+  {
+    segment: 'orders',
+    title: 'Orders',
+    icon: <ShoppingCartIcon />,
+  },
+  {
+    kind: 'divider',
+  },
+  {
+    kind: 'header',
+    title: 'Analytics',
+  },
+  {
+    segment: 'reports',
+    title: 'Reports',
+    icon: <BarChartIcon />,
+    children: [
+      {
+        segment: 'sales',
+        title: 'Sales',
+        icon: <DescriptionIcon />,
+      },
+      {
+        segment: 'traffic',
+        title: 'Traffic',
+        icon: <DescriptionIcon />,
+      },
+    ],
+  },
+  {
+    segment: 'integrations',
+    title: 'Integrations',
+    icon: <LayersIcon />,
+  },
+];
 
-const account = new Account(client);
+const demoTheme = extendTheme({
+  colorSchemes: { light: true, dark: true },
+  colorSchemeSelector: 'class',
+  breakpoints: {
+    values: {
+      xs: 0,
+      sm: 600,
+      md: 600,
+      lg: 1200,
+      xl: 1536,
+    },
+  },
+});
 
-const Dashboard = () => {
-  const navigate = useNavigate();
-  const [teacher, setTeacher] = useState(null);
-  const [drawerOpen, setDrawerOpen] = useState(false);
+function useDemoRouter(initialPath) {
+  const [pathname, setPathname] = React.useState(initialPath);
 
-  useEffect(() => {
-    const fetchUser = async () => {
-      try {
-        const user = await account.get();
-        setTeacher(user);
-      } catch (error) {
-        navigate('/login');
-      }
+  const router = React.useMemo(() => {
+    return {
+      pathname,
+      searchParams: new URLSearchParams(),
+      navigate: (path) => setPathname(String(path)),
     };
+  }, [pathname]);
 
-    fetchUser();
-  }, [navigate]);
+  return router;
+}
 
-  const handleLogout = async () => {
-    await account.deleteSession('current');
-    navigate('/');
-  };
+const Skeleton = styled('div')(({ theme, height }) => ({
+  backgroundColor: theme.palette.action.hover,
+  borderRadius: theme.shape.borderRadius,
+  height,
+  content: '" "',
+}));
 
-  const toggleDrawer = () => {
-    setDrawerOpen(!drawerOpen);
-  };
+export default function DashboardLayoutBasic(props) {
+  const { window } = props;
+
+  const router = useDemoRouter('/dashboard');
+
+  // Remove this const when copying and pasting into your project.
+  const demoWindow = window ? window() : undefined;
 
   return (
-    <Container maxWidth="md">
-      <Grid container spacing={3}>
-        <Grid item xs={2}>
-          <Paper elevation={3} sx={{ padding: 2, height: '100vh' }}>
-            <Box display="flex" flexDirection="column" justifyContent="space-between" sx={{ height: '100%' }}>
-              <IconButton onClick={toggleDrawer} sx={{ alignSelf: 'flex-start' }}>
-                <MenuIcon />
-              </IconButton>
-              {teacher && (
-                <Box display="flex" flexDirection="column" alignItems="center" mt={3}>
-                  <Avatar src="https://cdn.pixabay.com/photo/2017/01/31/21/23/avatar-2027366_1280.png" sx={{ width: 80, height: 80 }} />
-                  <Typography variant="h6" sx={{ mt: 1 }}>{teacher.name}</Typography>
-                </Box>
-              )}
-              <Drawer
-                anchor="left"
-                open={drawerOpen}
-                onClose={toggleDrawer}
-              >
-                <List>
-                  <ListItem button onClick={handleLogout}>
-                    <ListItemIcon><LogoutIcon /></ListItemIcon>
-                    <ListItemText primary="Déconnexion" />
-                  </ListItem>
-                </List>
-              </Drawer>
-            </Box>
-          </Paper>
-        </Grid>
+    <AppProvider
+      navigation={NAVIGATION}
+      router={router}
+      theme={demoTheme}
+      window={demoWindow}
+    >
+      <DashboardLayout>
+        <PageContainer>
+          <Grid container spacing={1}>
+            <Grid item xs={5} />
+            <Grid item xs={12}>
+              <Skeleton height={14} />
+            </Grid>
+            <Grid item xs={12}>
+              <Skeleton height={14} />
+            </Grid>
+            <Grid item xs={4}>
+              <Skeleton height={100} />
+            </Grid>
+            <Grid item xs={8}>
+              <Skeleton height={100} />
+            </Grid>
 
-        <Grid item xs={10}>
-          <Paper elevation={3} sx={{ padding: 4 }}>
-            <Typography variant="h4" color="primary" gutterBottom>
-              Bienvenue dans Exam Pro
-            </Typography>
-            <Typography variant="body1">
-              Ici vous pouvez gérer les examens, les soumissions et les résultats des étudiants.
-            </Typography>
-          </Paper>
-        </Grid>
-      </Grid>
-    </Container>
+            <Grid item xs={12}>
+              <Skeleton height={150} />
+            </Grid>
+            <Grid item xs={12}>
+              <Skeleton height={14} />
+            </Grid>
+
+            <Grid item xs={3}>
+              <Skeleton height={100} />
+            </Grid>
+            <Grid item xs={3}>
+              <Skeleton height={100} />
+            </Grid>
+            <Grid item xs={3}>
+              <Skeleton height={100} />
+            </Grid>
+            <Grid item xs={3}>
+              <Skeleton height={100} />
+            </Grid>
+          </Grid>
+        </PageContainer>
+      </DashboardLayout>
+    </AppProvider>
   );
-};
-
-export default Dashboard;
+}
