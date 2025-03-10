@@ -17,7 +17,7 @@ const theme = createTheme({
 
 const BRANDING = {
   logo: <img src="https://mui.com/static/logo.svg" alt="Logo" style={{ height: 24 }} />,
-  title: 'Ma Super Application',
+  title: 'Examen Pro',
 };
 
 const client = new Client();
