@@ -1,179 +1,172 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import {
+  Container,
+  Box,
+  Typography,
+  TextField,
+  Button,
+  Grid,
+  Link,
+  CircularProgress,
+} from "@mui/material";
+import { Client, Account, ID } from "appwrite";
+import { createTheme, ThemeProvider } from "@mui/material/styles";
+import { CssBaseline } from "@mui/material";
 
-const Register = () => {
-  const [username, setUsername] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [role, setRole] = useState('etudiant'); // Valeur par défaut
-  const [error, setError] = useState('');
+const client = new Client()
+  .setEndpoint("https://appwrite.momokabil.duckdns.org/v1")
+  .setProject("67cd9f540022aae0f0f5");
+
+const account = new Account(client);
+
+// Thème corrigé
+const theme = createTheme({
+  palette: {
+    mode: "dark",
+    primary: { main: "#1976d2" },
+    background: { default: "#121212", paper: "#1e1e1e" },
+    text: { primary: "#ffffff" },
+  },
+});
+
+export default function Register() {
   const navigate = useNavigate();
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+    setError("");
+    setLoading(true);
 
-    if (password !== confirmPassword) {
-      setError('Les mots de passe ne correspondent pas.');
+    const data = new FormData(event.currentTarget);
+    const name = data.get("name")?.trim();
+    const email = data.get("email")?.trim();
+    const password = data.get("password");
+    const confirmPassword = data.get("confirmPassword");
+
+    if (!name || !email || !password || !confirmPassword) {
+      setError("Tous les champs sont obligatoires.");
+      setLoading(false);
       return;
     }
 
-    // Partie à implémenter pour l'envoi des données au backend
-    // try {
-    //   await axios.post('http://localhost:5000/register', {
-    //     username,
-    //     email,
-    //     password,
-    //   });
-    //   navigate('/'); // Redirige vers la page de connexion
-    // } catch (err) {
-    //   setError(err.response?.data?.message || 'Une erreur est survenue.');
-    //   console.error('Erreur d'inscription:', err);
-    // }
-    console.log('Inscription:', { username, email, password }); // Pour simuler l'envoi des données
-    navigate('/'); // Redirige vers la page de connexion
+    if (password.length < 6) {
+      setError("Le mot de passe doit contenir au moins 6 caractères.");
+      setLoading(false);
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      setError("Les mots de passe ne correspondent pas.");
+      setLoading(false);
+      return;
+    }
+
+    try {
+      await account.create(ID.unique(), email, password, name);
+      navigate("/");
+    } catch (err) {
+      setError(err?.message || "Erreur lors de l'inscription !");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
-    <div style={styles.container}>
-    <div style={styles.leftSide}>
-      <h2 style={{ color: 'red' }}>Inscription</h2>
-      {error && <p style={{ color: 'red' }}>{error}</p>}
-      <form onSubmit={handleSubmit} style={styles.form}>
-        <div style={styles.inputGroup}>
-          <label htmlFor="username">Nom d'utilisateur:</label>
-          <input
-            type="text"
-            id="username"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            required
-            style={styles.input}
-          />
-        </div>
-        <div style={styles.inputGroup}>
-          <label htmlFor="email">Email:</label>
-          <input
-            type="email"
-            id="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-            style={styles.input}
-          />
-        </div>
-        <div style={styles.inputGroup}>
-          <label htmlFor="password">Mot de passe:</label>
-          <input
-            type="password"
-            id="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-            style={styles.input}
-          />
-        </div>
-        <div style={styles.inputGroup}>
-          <label htmlFor="confirmPassword">Confirmer le mot de passe:</label>
-          <input
-            type="password"
-            id="confirmPassword"
-            value={confirmPassword}
-            onChange={(e) => setConfirmPassword(e.target.value)}
-            required
-            style={styles.input}
-          />
-        </div>
-        {/* Ajout du champ de sélection pour le rôle */}
-        <div style={styles.inputGroup}>
-          <label htmlFor="role">Rôle:</label>
-          <select
-            id="role"
-            value={role}
-            onChange={(e) => setRole(e.target.value)}
-            style={styles.input}
+    <ThemeProvider theme={theme}>
+      <CssBaseline />
+      <Container component="main" maxWidth="xs">
+        <Box
+          sx={{
+            boxShadow: 3,
+            borderRadius: 2,
+            px: 4,
+            py: 6,
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            bgcolor: "background.paper",
+            minHeight: "100vh",
+            justifyContent: "center",
+          }}
+        >
+          <Typography component="h1" variant="h5">
+            Inscription
+          </Typography>
+          {error && (
+            <Typography color="error" sx={{ mt: 2 }}>
+              {error}
+            </Typography>
+          )}
+          <Box
+            component="form"
+            onSubmit={handleSubmit}
+            noValidate
+            sx={{ mt: 2, width: "100%" }}
           >
-            <option value="etudiant">Étudiant</option>
-            <option value="enseignant">Enseignant</option>
-          </select>
-        </div>
-        <button type="submit" style={styles.button}>
-          S'inscrire
-        </button>
-      </form>
-    </div>
-    <div style={styles.rightSide}>
-      <div style={styles.examTextContainer}>
-        <span style={styles.examText}>Examen Pro</span>
-        <span style={styles.sticker}></span>
-      </div>
-    </div>
-  </div>
-);
-};
-
-const styles = {
-  container: {
-    display: 'flex',
-    height: '100vh',
-    backgroundColor: '#f0f0f0',
-  },
-  leftSide: {
-    flex: 1,
-    display: 'flex',
-    padding: 200,
-    flexDirection: 'column',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  rightSide: {
-    flexGrow: 1,
-    display: 'flex',
-    padding: 100,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#000000',
-  },
-  form: {
-    display: 'flex',
-    flexDirection: 'column',
-    width: '380px',
-    padding: '40px',
-    backgroundColor: '#fff',
-    borderRadius: '8px',
-    boxShadow: '0 0 10px rgba(0, 0, 0, 0.1)',
-  },
-  inputGroup: {
-    marginBottom: '15px',
-    color: '#CECECE',
-  },
-  input: {
-    width: '100%',
-    padding: '10px',
-    borderRadius: '4px',
-    border: '1px solid #ccc',
-  },
-  button: {
-    padding: '10px',
-    borderRadius: '4px',
-    border: 'none',
-    backgroundColor: '#007BFF',
-    color: '#fff',
-    cursor: 'pointer',
-  },
-  examTextContainer: {
-    textAlign: 'center',
-    marginBottom: 200,
-  },
-  examText: {
-    fontSize: '6em',
-    fontWeight: 'bold',
-    color: '#FFFFFF',
-  },
-  sticker: {
-    fontSize: '4em',
-    marginTop: '20px',
-  },
-};
-
-export default Register;
+            <TextField
+              margin="normal"
+              required
+              fullWidth
+              id="name"
+              label="Nom"
+              name="name"
+              autoComplete="name"
+              autoFocus
+            />
+            <TextField
+              margin="normal"
+              required
+              fullWidth
+              id="email"
+              label="Adresse Email"
+              name="email"
+              autoComplete="email"
+            />
+            <TextField
+              margin="normal"
+              required
+              fullWidth
+              name="password"
+              label="Mot de passe"
+              type="password"
+              id="password"
+              autoComplete="new-password"
+            />
+            <TextField
+              margin="normal"
+              required
+              fullWidth
+              name="confirmPassword"
+              label="Confirmer le mot de passe"
+              type="password"
+              id="confirmPassword"
+            />
+            <Button
+              type="submit"
+              fullWidth
+              variant="contained"
+              sx={{ mt: 3, mb: 2 }}
+              disabled={loading}
+            >
+              {loading ? <CircularProgress size={24} color="inherit" /> : "S'inscrire"}
+            </Button>
+            <Grid container>
+              <Grid item>
+                <Link
+                  onClick={() => navigate("/")}
+                  variant="body2"
+                  sx={{ cursor: "pointer" }}
+                >
+                  Déjà un compte ? Se connecter
+                </Link>
+              </Grid>
+            </Grid>
+          </Box>
+        </Box>
+      </Container>
+    </ThemeProvider>
+  );
+}

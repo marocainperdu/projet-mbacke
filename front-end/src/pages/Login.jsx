@@ -1,96 +1,139 @@
-import * as React from 'react';
-import { AppProvider } from '@toolpad/core/AppProvider';
-import { SignInPage } from '@toolpad/core/SignInPage';
-import { useTheme, createTheme } from '@mui/material/styles';
-import { CssBaseline, Box } from '@mui/material';
+import React, { useState } from 'react';
+import { Container, Typography, TextField, Button, Alert, Box } from '@mui/material';
+import { CssBaseline } from "@mui/material";
+import { useNavigate } from "react-router-dom";
 import { Client, Account } from 'appwrite';
-import { useNavigate } from 'react-router-dom';  // Importer useNavigate
 
-const theme = createTheme({
-  palette: {
-    mode: 'dark',
-    primary: {
-      main: '#1976d2',
-    },
-  },
-});
+const client = new Client()
+  .setEndpoint("https://appwrite.momokabil.duckdns.org/v1")
+  .setProject("67cd9f540022aae0f0f5");
 
-const BRANDING = {
-  logo: <img src="https://mui.com/static/logo.svg" alt="Logo" style={{ height: 24 }} />,
-  title: 'Examen Pro',
-};
-
-const client = new Client();
-client.setEndpoint('https://appwrite.momokabil.duckdns.org/v1').setProject('67cd9f540022aae0f0f5');
 const account = new Account(client);
 
-const signIn = async (provider, formData, navigate) => {
-  const email = formData?.get('email');
-  const password = formData?.get('password');
+function Login() {
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
+    const [error, setError] = useState(null);
+    const [loading, setLoading] = useState(false);
+    const navigate = useNavigate(); // Hook pour naviguer vers la page d'inscription
 
-  try {
-    // Vérifier si une session existe déjà
-    const currentUser = await account.get(); // Récupérer les informations de l'utilisateur connecté
+    const handleRedirect = async (jwt) => {
+        try {
+            // Utilise directement le JWT pour vérifier l'utilisateur
+            client.setJWT(jwt);
+            const response = await account.get();  // Vérifie les infos de l'utilisateur connecté
+            sessionStorage.setItem('email', response.email);
+    
+            if (response.labels?.includes('prof')) {
+                window.location.href = '/dashprof';
+            } else {
+                window.location.href = '/dash';
+            }
+        } catch (err) {
+            console.error('Échec de la vérification du JWT', err);
+            setError("Erreur lors de la vérification de votre compte.");
+        }
+    };
+    
 
-    if (currentUser) {
-      // Si l'utilisateur est déjà connecté, on se contente de se connecter avec la session existante
-      console.log('Utilisateur déjà connecté:', currentUser);
-      navigate('/dashboard');  // Redirige l'utilisateur vers le tableau de bord
-      return { type: 'CredentialsSignin', message: 'Connexion réussie avec la session existante.' };
-    } else {
-      // Sinon, on crée une nouvelle session avec les identifiants fournis
-      const response = await account.createEmailPasswordSession(email, password);
-      console.log('Connexion réussie:', response);
-      navigate('/dashboard');  // Redirige vers le tableau de bord après la connexion réussie
-      return { type: 'CredentialsSignin', message: 'Nouvelle session créée et connexion réussie.' };
-    }
-  } catch (error) {
-    console.error('Erreur de connexion:', error);
-    if (error.code === 401) {
-      // Erreur d'authentification (identifiants invalides)
-      return { type: 'CredentialsSignin', error: 'Identifiants invalides.' };
-    } else {
-      // Autres erreurs
-      return { type: 'CredentialsSignin', error: 'Une erreur est survenue. Veuillez réessayer.' };
-    }
-  }
-};
+    const handleLogin = async () => {
+        setError(null);
+        setLoading(true);
+    
+        try {
+            try {
+                // Supprime la session si elle existe déjà
+                await account.deleteSession('current');
+            } catch {
+                console.log('Aucune session courante à supprimer');
+            }
+    
+            // Crée une session avec l'email et le mot de passe
+            await account.createEmailPasswordSession(email, password);
+    
+            // Crée un JWT
+            const jwt = await account.createJWT();
+            sessionStorage.setItem('jwt', jwt.jwt);  // Stocke le JWT dans sessionStorage
+    
+            // Redirige selon le rôle de l'utilisateur
+            handleRedirect(jwt.jwt);
+        } catch (err) {
+            setError(err?.message || "Une erreur s'est produite.");
+        } finally {
+            setLoading(false);
+        }
+    };
+    
 
-export default function BrandingSignInPage() {
-  const theme = useTheme();
-  const navigate = useNavigate();  // Utiliser useNavigate pour la redirection
-
-  React.useEffect(() => {
-    document.body.style.display = 'flex';
-    document.body.style.justifyContent = 'center';
-    document.body.style.alignItems = 'center';
-    document.body.style.minHeight = '100vh';
-    document.body.style.flexDirection = 'column';
-    document.body.style.margin = '0';
-  }, []);
-
-  return (
-    <AppProvider branding={BRANDING} theme={theme}>
-      <CssBaseline />
-      <Box
-        sx={{
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          minHeight: '100vh',
-          padding: 2,
-          flexDirection: 'column',
-        }}
-      >
-        <SignInPage
-          signIn={(provider, formData) => signIn(provider, formData, navigate)}  // Passer navigate à signIn
-          providers={[{ id: 'credentials', name: 'Email et Mot de Passe' }]}
-          slotProps={{
-            emailField: { autoFocus: true, variant: 'outlined', color: 'primary' },
-            form: { noValidate: true, sx: { display: 'flex', flexDirection: 'column', gap: 2, marginBottom: 2 } },
-          }}
-        />
-      </Box>
-    </AppProvider>
-  );
+    return (
+        <>
+            <CssBaseline />
+            <Container maxWidth="xs">
+                <Box
+                    sx={{
+                        display: "flex",
+                        flexDirection: "column",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        height: "100vh", // Centrage vertical
+                    }}
+                >
+                    <Box
+                        sx={{
+                            boxShadow: 3,
+                            borderRadius: 2,
+                            px: 4,
+                            py: 6,
+                            bgcolor: "background.paper",
+                            width: "100%",
+                            textAlign: "center",
+                        }}
+                    >
+                        <Typography variant="h4" gutterBottom>
+                            Connexion
+                        </Typography>
+                        {error && <Alert severity="error">{error}</Alert>}
+                        <TextField
+                            label="Email"
+                            variant="outlined"
+                            fullWidth
+                            margin="normal"
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                        />
+                        <TextField
+                            label="Mot de passe"
+                            type="password"
+                            variant="outlined"
+                            fullWidth
+                            margin="normal"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                        />
+                        <Button
+                            variant="contained"
+                            color="primary"
+                            fullWidth
+                            onClick={handleLogin}
+                            sx={{ mt: 2 }}
+                            disabled={loading}
+                        >
+                            {loading ? "Connexion..." : "Connexion"}
+                        </Button>
+                        <Button
+                            variant="outlined"
+                            color="secondary"
+                            fullWidth
+                            sx={{ mt: 1 }}
+                            onClick={() => navigate("/register")}
+                        >
+                            S'inscrire
+                        </Button>
+                    </Box>
+                </Box>
+            </Container>
+        </>
+    );
 }
+
+export default Login;
