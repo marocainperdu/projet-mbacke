@@ -17,6 +17,7 @@
     "@mui/styled-engine": "^6.4.6",
     "@toolpad/core": "^0.12.1",
     "appwrite": "^17.0.0",
+    "node-appwrite": "^15.0.1",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-router-dom": "^7.3.0"

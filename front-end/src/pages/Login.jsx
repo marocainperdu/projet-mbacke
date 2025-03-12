@@ -1,8 +1,19 @@
 import React, { useState } from 'react';
-import { Container, Typography, TextField, Button, Alert, Box } from '@mui/material';
+import { Container, Typography, TextField, Button, Alert, Box, ThemeProvider } from '@mui/material';
 import { CssBaseline } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import { Client, Account } from 'appwrite';
+import { createTheme } from '@mui/material/styles';
+
+
+const theme = createTheme({
+    palette: {
+      mode: "dark",
+      primary: { main: "#1976d2" },
+      background: { default: "#121212", paper: "#1e1e1e" },
+      text: { primary: "#ffffff" },
+    },
+  });
 
 const client = new Client()
   .setEndpoint("https://appwrite.momokabil.duckdns.org/v1")
@@ -66,7 +77,7 @@ function Login() {
     
 
     return (
-        <>
+        <ThemeProvider theme={theme}>
             <CssBaseline />
             <Container maxWidth="xs">
                 <Box
@@ -132,7 +143,7 @@ function Login() {
                     </Box>
                 </Box>
             </Container>
-        </>
+        </ThemeProvider>
     );
 }
 

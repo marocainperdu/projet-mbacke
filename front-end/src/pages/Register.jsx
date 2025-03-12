@@ -20,7 +20,6 @@ const client = new Client()
 
 const account = new Account(client);
 
-// Thème corrigé
 const theme = createTheme({
   palette: {
     mode: "dark",
@@ -39,40 +38,71 @@ export default function Register() {
     event.preventDefault();
     setError("");
     setLoading(true);
-
+    
     const data = new FormData(event.currentTarget);
     const name = data.get("name")?.trim();
     const email = data.get("email")?.trim();
     const password = data.get("password");
     const confirmPassword = data.get("confirmPassword");
-
+    const role = data.get("role");
+    
     if (!name || !email || !password || !confirmPassword) {
       setError("Tous les champs sont obligatoires.");
       setLoading(false);
       return;
     }
-
+    
     if (password.length < 6) {
       setError("Le mot de passe doit contenir au moins 6 caractères.");
       setLoading(false);
       return;
     }
-
+    
     if (password !== confirmPassword) {
       setError("Les mots de passe ne correspondent pas.");
       setLoading(false);
       return;
     }
-
+    
     try {
-      await account.create(ID.unique(), email, password, name);
-      navigate("/");
-    } catch (err) {
-      setError(err?.message || "Erreur lors de l'inscription !");
-    } finally {
+      // Vérifier si l'utilisateur existe déjà
+      await account.get();
+      setError("Un compte avec cet e-mail existe déjà. Veuillez vous connecter.");
       setLoading(false);
+      return;
+    } catch {
+      try {
+        const user = await account.create(ID.unique(), email, password, name);
+        
+        // Si le rôle est "prof", on crée l'utilisateur avec un statut "en attente"
+        let userRole = role === "prof" ? "prof_en_attente" : role;
+        
+        // Envoi du rôle au backend via une API sécurisée
+        await fetch("/api/set-user-role", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ userId: user.$id, role: userRole }),
+        });
+    
+        // Affichage du message si c'est un prof
+        if (role === "prof") {
+          setError("Vous avez été inscrit, mais vous devez contacter un administrateur pour recevoir votre rôle.");
+        } else {
+          // Rediriger uniquement si l'utilisateur est un étudiant
+          navigate("/");
+        }
+      } catch (err) {
+        if (err.code === 409) {
+          setError("Un utilisateur avec cet e-mail existe déjà. Veuillez vous connecter.");
+        } else {
+          setError(err?.message || "Erreur lors de l'inscription !");
+        }
+      } finally {
+        setLoading(false);
+      }
     }
   };
+  
 
   return (
     <ThemeProvider theme={theme}>
@@ -88,7 +118,7 @@ export default function Register() {
             flexDirection: "column",
             alignItems: "center",
             bgcolor: "background.paper",
-            minHeight: "100vh",
+            height: "100vh",
             justifyContent: "center",
           }}
         >
@@ -144,6 +174,21 @@ export default function Register() {
               type="password"
               id="confirmPassword"
             />
+            <TextField
+              select
+              margin="normal"
+              required
+              fullWidth
+              name="role"
+              label="Vous êtes"
+              id="role"
+              SelectProps={{
+                native: true,
+              }}
+            >
+              <option value="etudiant">Étudiant</option>
+              <option value="prof">Enseignant</option>
+            </TextField>
             <Button
               type="submit"
               fullWidth
