@@ -10,6 +10,10 @@ const PORT = 3000;
 app.use(express.json());
 app.use(cors());
 
+app.listen(process.PORT, () =>{
+    console.log('Le serveur est ouvert')
+})
+
 const db = mysql.createConnection({
     host: "sql.momokabil.duckdns.org", 
     user: "root",
@@ -43,14 +47,19 @@ app.post("/register", async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, 10);
 
     const query = "INSERT INTO users (username, email, password, role) VALUES (?, ?, ?, ?)";
-    db.query(query, [username, email, hashedPassword, role], (err, results) => {
-        if (err) {
-            console.error("Erreur d'inscription:", err);
-            res.status(500).json({ message: "Erreur lors de l'inscription" });
-        } else {
+    try {
+        db.query(query, [username, email, hashedPassword, role], (err, results) => {
+          if (err) {
+            console.error("Erreur de base de données:", err);
+            res.status(500).json({ message: "Erreur lors de l'inscription (base de données)" });
+          } else {
             res.status(201).json({ message: "Inscription réussie" });
-        }
-    });
+          }
+        });
+      } catch (dbErr) {
+        console.error("Erreur lors de l'exécution de la requête:", dbErr);
+        res.status(500).json({ message: "Erreur lors de l'inscription (exécution de la requête)" });
+      }
 });
 
 // Route de connexion
@@ -181,6 +190,6 @@ app.get("after", (req, res) => {
     });
 });
 
-app.listen(PORT, () => {
+app.listen(PORT, 'localhost', () => {
     console.log(`Serveur démarré http://localhost:${PORT}`);
 });

@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
 
 const Register = () => {
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [role, setRole] = useState('etudiant'); // Valeur par défaut
+  const [role, setRole] = useState('student'); // Valeur par défaut
   const [error, setError] = useState('');
   const navigate = useNavigate();
 
@@ -18,21 +19,23 @@ const Register = () => {
       return;
     }
 
-    // Partie à implémenter pour l'envoi des données au backend
-    // try {
-    //   await axios.post('http://localhost:5000/register', {
-    //     username,
-    //     email,
-    //     password,
-    //   });
-    //   navigate('/'); // Redirige vers la page de connexion
-    // } catch (err) {
-    //   setError(err.response?.data?.message || 'Une erreur est survenue.');
-    //   console.error('Erreur d'inscription:', err);
-    // }
-    console.log('Inscription:', { username, email, password }); // Pour simuler l'envoi des données
-    navigate('/'); // Redirige vers la page de connexion
+    try {
+      const response = await axios.post('http://localhost:3000/register', {
+        username,
+        email,
+        password,
+        role,
+      });
+
+      console.log('Inscription réussie:', response.data);
+      navigate('/'); // Redirige vers la page de connexion
+
+    } catch (err) {
+      setError(err.response?.data?.message || 'Une erreur est survenue lors de l\'inscription.');
+      console.error('Erreur d\'inscription:', err);
+    }
   };
+
 
   return (
     <div style={styles.container}>
@@ -93,8 +96,8 @@ const Register = () => {
             onChange={(e) => setRole(e.target.value)}
             style={styles.input}
           >
-            <option value="etudiant">Étudiant</option>
-            <option value="enseignant">Enseignant</option>
+            <option value="student">Étudiant</option>
+            <option value="teacher">Enseignant</option>
           </select>
         </div>
         <button type="submit" style={styles.button}>
@@ -105,7 +108,7 @@ const Register = () => {
     <div style={styles.rightSide}>
       <div style={styles.examTextContainer}>
         <span style={styles.examText}>Examen Pro</span>
-        <span style={styles.sticker}></span>
+        <span style={styles.sticker}>📚</span>
       </div>
     </div>
   </div>

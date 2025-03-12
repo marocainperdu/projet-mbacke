@@ -1,28 +1,36 @@
 import React, { useState } from 'react';
-import { useNavigate ,  Link} from 'react-router-dom'; // Importez useNavigate
+import { useNavigate, Link } from 'react-router-dom';
+import axios from 'axios';
 
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState(''); // Pour afficher les erreurs
-  const navigate = useNavigate(); // Initialisez navigate
+  const [error, setError] = useState('');
+  const navigate = useNavigate();
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Constantes pour simuler l'authentification
-    const validEmail = 'test@example.com';
-    const validPassword = 'password';
+    try {
+      const response = await axios.post('http://sql.momokabil.duckdns.org:3000/login', { // Utiliser l'URL du backend
+        email,
+        password,
+      });
 
-    if (email === validEmail && password === validPassword) {
-      // Authentification réussie
-      console.log('Authentification réussie !');
-      localStorage.setItem('userEmail', email); // Stocker l'email
-      navigate('/dashboard'); // Redirige vers /dashboard
-    } else {
-      // Authentification échouée
-      setError('Email ou mot de passe incorrect.'); // Affiche un message d'erreur
-      console.log('Authentification échouée.');
+      // Stockez le JWT et les informations de l'utilisateur
+      localStorage.setItem('token', response.data.token);
+      localStorage.setItem('user', JSON.stringify(response.data.user));
+
+      // Redirigez vers le tableau de bord
+      if (response.data.user.role === 'enseignant') {
+        navigate('/enseignant/dashboard'); // Redirige vers le tableau de bord enseignant
+      } else {
+        navigate('/etudiant/dashboard'); // Redirige vers le tableau de bord etudiant
+      }
+
+    } catch (err) {
+      setError(err.response?.data?.message || 'Email ou mot de passe incorrect.');
+      console.error('Erreur de connexion:', err);
     }
   };
 

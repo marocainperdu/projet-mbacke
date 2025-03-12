@@ -1,29 +1,20 @@
 # Étape 1 : Utiliser une image de base Node.js
-FROM node:16 AS build
+FROM node:16
 
 # Étape 2 : Définir le répertoire de travail
 WORKDIR /app
 
 # Étape 3 : Copier les fichiers de dépendances
-COPY package.json yarn.lock ./
+COPY package*.json ./
 
 # Étape 4 : Installer les dépendances
-RUN yarn install
+RUN npm install
 
 # Étape 5 : Copier le code source
 COPY . .
 
-# Étape 6 : Builder l'application
-RUN yarn build
+# Étape 6 : Exposer le port sur lequel votre serveur Express.js écoute
+EXPOSE 3000 
 
-# Étape 7 : Utiliser une image légère pour servir l'application
-FROM nginx:alpine
-
-# Étape 8 : Copier les fichiers buildés dans Nginx
-COPY --from=build /app/build /usr/share/nginx/html
-
-# Étape 9 : Exposer le port 80
-EXPOSE 80
-
-# Étape 10 : Démarrer Nginx
-CMD ["nginx", "-g", "daemon off;"]
+# Étape 7 : Démarrer Nginx
+CMD ["node", "serveur.js"]

@@ -7,19 +7,19 @@ services:
       MYSQL_ROOT_PASSWORD: 2004super
       MYSQL_DATABASE: mbacke-projet
       MYSQL_USER: root
-      MYSQL_PASSWORD: 2004super
     volumes:
       - mysql_data:/var/lib/mysql
     ports:
-      - "3306:3306"
+      - "3307:3307"
 
   # Service pour le backend
   backend:
     build:
-      context: ./backend
+      context: ./back-end
       dockerfile: Dockerfile
     container_name: exam_backend
     environment:
+      MYSQL_ROOT_PASSWORD: 2004super
       DB_HOST: db
       DB_USER: root
       DB_PASSWORD: 2004super
@@ -32,7 +32,7 @@ services:
   # Service pour le frontend
   frontend:
     build:
-      context: ./frontend
+      context: ./front-end
       dockerfile: Dockerfile
     container_name: exam_frontend
     ports:

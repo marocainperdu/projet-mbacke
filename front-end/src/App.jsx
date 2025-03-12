@@ -1,16 +1,24 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'; // Importez les composants de routage
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Login from './Login';
-import Dashboard from './Dashboard'; // Importer le Dashboard
+import Dashboard from './Dashboard';
 import Register from './Register';
+import ProtectedRoute from './ProtectedRoute'; // Importez ProtectedRoute
 
 const App = () => {
   return (
-    <Router> {/* Enveloppez l'application avec Router */}
-      <Routes> {/* Utilisez Routes pour définir les routes */}
-        <Route path="/" element={<Login />} /> {/* Route pour la page de connexion */}
-        <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/register" element={<Register />} /> {/* Ajoutez la route pour Register */}
+    <Router>
+      <Routes>
+        <Route path="/" element={<Login />} />
+        <Route
+          path="/dashboard"
+          element={
+            <ProtectedRoute> {/* Enveloppez Dashboard avec ProtectedRoute */}
+              <Dashboard />
+            </ProtectedRoute>
+          }
+        />
+        <Route path="/register" element={<Register />} />
       </Routes>
     </Router>
   );
