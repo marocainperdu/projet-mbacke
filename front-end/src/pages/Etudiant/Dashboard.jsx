@@ -42,7 +42,7 @@ const DashboardProf = () => {
       <AppBar position="static" sx={{ marginBottom: 3 }}>
         <Toolbar>
           <Typography variant="h6" sx={{ flexGrow: 1 }}>
-            Dashboard Professeur
+            Dashboard Étudiant
           </Typography>
           <IconButton color="inherit" onClick={handleLogout}>
             <LogoutIcon />

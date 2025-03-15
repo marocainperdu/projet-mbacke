@@ -8,10 +8,8 @@ import ChatIcon from '@mui/icons-material/Chat';
 import NotificationsIcon from '@mui/icons-material/Notifications';
 import BarChartIcon from '@mui/icons-material/BarChart';
 import PropTypes from 'prop-types';
-import Plagiarism from "./Plagiarism";
 import Subjects from './Subjects';
 import Papers from './Papers';
-import Chatbot from './Chatbot';
 import Notif from './Notif';
 import Dashboard from './Dashboard';
 import Rapport from './Reports';
@@ -31,9 +29,6 @@ const NAVIGATION = [
   { kind: 'header', title: 'Examen' },
   { segment: 'subjects', title: 'Sujets d\'Examen', icon: <LibraryBooksIcon /> },
   { segment: 'papers', title: 'Copies et Corrections', icon: <AssignmentIcon /> },
-  { kind: 'divider' },
-  { segment: 'notifications', title: 'Notifications', icon: <NotificationsIcon /> },
-  { kind: 'divider' },
   { kind: 'divider' },
   { kind: 'header', title: 'Utilisateur' },
   { kind: 'logo', segment: 'user', title: 'Utilisateur', icon: <AccountCircleIcon /> },
