@@ -1,33 +1,48 @@
-// OrderButtons.js
 import React, { useState, useEffect } from 'react';
 import { 
   AppBar, Toolbar, Typography, Container, Paper, List, ListItem, 
-  ListItemText, IconButton, Badge, Button, useTheme, useMediaQuery 
+  ListItemText, IconButton, Badge, Button
 } from '@mui/material';
 import NotificationsIcon from '@mui/icons-material/Notifications';
 import axios from 'axios';
 
 const Notifications = () => {
   const [notifications, setNotifications] = useState([]);
-  const theme = useTheme();
-  const isDarkMode = theme.palette.mode === 'dark';
 
   useEffect(() => {
-    axios.get("http://localhost:5000/api/notifications")
-      .then((res) => setNotifications(Array.isArray(res.data) ? res.data : []))
-      .catch((err) => console.error("Erreur API notifications :", err));
+    fetchNotifications();
   }, []);
+
+  // Récupérer les notifications depuis l'API
+  const fetchNotifications = async () => {
+    try {
+      const res = await axios.get("http://localhost:5000/api/notifications");
+      setNotifications(Array.isArray(res.data) ? res.data : []);
+    } catch (err) {
+      console.error("Erreur API notifications :", err);
+    }
+  };
 
   const unreadCount = notifications.filter(n => !n.read).length;
 
-  // Fonction pour marquer une notification comme lue
-  const markAsRead = (id) => {
-    setNotifications(notifications.map(n => n.id === id ? { ...n, read: true } : n));
+  // Marquer une notification comme lue
+  const markAsRead = async (id) => {
+    try {
+      await axios.put(`http://localhost:5000/api/notifications/${id}/read`);
+      setNotifications(notifications.map(n => n.id === id ? { ...n, read: true } : n));
+    } catch (err) {
+      console.error("Erreur lors de la mise à jour de la notification :", err);
+    }
   };
 
-  // Fonction pour marquer toutes les notifications comme lues
-  const markAllAsRead = () => {
-    setNotifications(notifications.map(n => ({ ...n, read: true })));
+  // Marquer toutes les notifications comme lues
+  const markAllAsRead = async () => {
+    try {
+      await axios.put("http://localhost:5000/api/notifications/read-all");
+      setNotifications(notifications.map(n => ({ ...n, read: true })));
+    } catch (err) {
+      console.error("Erreur lors de la mise à jour des notifications :", err);
+    }
   };
 
   return (
@@ -47,15 +62,7 @@ const Notifications = () => {
       </AppBar>
 
       {/* Liste des notifications */}
-      <Paper 
-        elevation={3} 
-        sx={{ 
-          marginTop: 3, 
-          padding: 2, 
-          backgroundColor: isDarkMode ? "#333" : "#fff", 
-          color: isDarkMode ? "#fff" : "#000"
-        }}
-      >
+      <Paper elevation={3} sx={{ marginTop: 3, padding: 2 }}>
         <List>
           {notifications.length > 0 ? (
             notifications.map((notification) => (
@@ -63,8 +70,7 @@ const Notifications = () => {
                 key={notification.id} 
                 onClick={() => markAsRead(notification.id)}
                 sx={{
-                  backgroundColor: notification.read ? (isDarkMode ? "#444" : "white") : (isDarkMode ? "#555" : "#f0f8ff"),
-                  color: isDarkMode ? "#fff" : "#000",
+                  backgroundColor: notification.read ? "#e0e0e0" : "#f0f8ff",
                   cursor: 'pointer',
                   borderBottom: '1px solid #ddd'
                 }}
@@ -73,7 +79,7 @@ const Notifications = () => {
               </ListItem>
             ))
           ) : (
-            <Typography textAlign="center" sx={{ color: isDarkMode ? "#fff" : "#000" }}>
+            <Typography textAlign="center">
               Aucune notification
             </Typography>
           )}

@@ -38,72 +38,79 @@ export default function Register() {
     event.preventDefault();
     setError("");
     setLoading(true);
-    
+  
     const data = new FormData(event.currentTarget);
     const name = data.get("name")?.trim();
     const email = data.get("email")?.trim();
     const password = data.get("password");
     const confirmPassword = data.get("confirmPassword");
     const role = data.get("role");
-    
+  
     if (!name || !email || !password || !confirmPassword) {
       setError("Tous les champs sont obligatoires.");
       setLoading(false);
       return;
     }
-    
-    if (password.length < 6) {
-      setError("Le mot de passe doit contenir au moins 6 caractères.");
+  
+    if (password.length < 8) {  // Mot de passe minimum de 8 caractères
+      setError("Le mot de passe doit contenir au moins 8 caractères.");
       setLoading(false);
       return;
     }
-    
+  
     if (password !== confirmPassword) {
       setError("Les mots de passe ne correspondent pas.");
       setLoading(false);
       return;
     }
+
+    // Mappage des rôles envoyés
+    const roleMapping = {
+        prof: 'teacher',  // Mapping "prof" en "teacher"
+        etudiant: 'student',  // Mapping "etudiant" en "student"
+        // Ajoute d'autres mappings si nécessaire
+    };
     
+    const mappedRole = roleMapping[role] || role;  // Si le rôle n'est pas trouvé, utilise le rôle fourni tel quel
+  
     try {
-      // Vérifier si l'utilisateur existe déjà
-      await account.get();
-      setError("Un compte avec cet e-mail existe déjà. Veuillez vous connecter.");
-      setLoading(false);
-      return;
-    } catch {
-      try {
-        const user = await account.create(ID.unique(), email, password, name);
-        
-        // Si le rôle est "prof", on crée l'utilisateur avec un statut "en attente"
-        let userRole = role === "prof" ? "prof_en_attente" : role;
-        
-        // Envoi du rôle au backend via une API sécurisée
-        await fetch("/api/set-user-role", {
+
+      await account.create('unique()', email, password, name);
+
+        // L'appel à l'API backend pour l'insertion
+        const response = await fetch("http://localhost:3000/api/new-user", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ userId: user.$id, role: userRole }),
+          body: JSON.stringify({
+              email: email,
+              password: password,
+              name: name,
+              role: mappedRole,
+          }),
         });
-    
-        // Affichage du message si c'est un prof
-        if (role === "prof") {
-          setError("Vous avez été inscrit, mais vous devez contacter un administrateur pour recevoir votre rôle.");
-        } else {
-          // Rediriger uniquement si l'utilisateur est un étudiant
-          navigate("/");
-        }
-      } catch (err) {
-        if (err.code === 409) {
-          setError("Un utilisateur avec cet e-mail existe déjà. Veuillez vous connecter.");
-        } else {
-          setError(err?.message || "Erreur lors de l'inscription !");
-        }
-      } finally {
-        setLoading(false);
-      }
-    }
-  };
-  
 
+        if (response.ok) {
+            // Si c'est un "prof", affiche un message spécifique
+            if (role === "prof") {
+                setError("Vous avez été inscrit, mais vous devez contacter un administrateur pour recevoir votre rôle.");
+            } else {
+                // Redirige l'utilisateur vers la page d'accueil si c'est un étudiant
+                navigate("/");
+            }
+        } else {
+            // Gestion des erreurs venant du backend
+            const result = await response.json();  // Récupère le message d'erreur envoyé par le backend
+            setError(result.message || "Erreur lors de l'insertion dans la base de données.");
+        }
+    } catch (err) {
+        setError(err?.message || "Erreur lors de l'inscription !");
+    } finally {
+        setLoading(false);
+    }
+};
+
+
+  
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
