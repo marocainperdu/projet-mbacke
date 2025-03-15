@@ -63,53 +63,46 @@ export default function Register() {
       setLoading(false);
       return;
     }
-
-    // Mappage des rôles envoyés
+  
     const roleMapping = {
-        prof: 'teacher',  // Mapping "prof" en "teacher"
-        etudiant: 'student',  // Mapping "etudiant" en "student"
-        // Ajoute d'autres mappings si nécessaire
+      prof: 'teacher',  // Mapping "prof" en "teacher"
+      etudiant: 'student',  // Mapping "etudiant" en "student"
     };
     
     const mappedRole = roleMapping[role] || role;  // Si le rôle n'est pas trouvé, utilise le rôle fourni tel quel
   
     try {
-
-      await account.create('unique()', email, password, name);
-
-        // L'appel à l'API backend pour l'insertion
-        const response = await fetch("http://localhost:3000/api/new-user", {
+      const response = await account.create(ID.unique(), email, password, name);
+      
+      if (response) {
+        const apiResponse = await fetch("http://localhost:3000/api/new-user", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-              email: email,
-              password: password,
-              name: name,
-              role: mappedRole,
+            email: email,
+            password: password,
+            name: name,
+            role: mappedRole,
           }),
         });
-
-        if (response.ok) {
-            // Si c'est un "prof", affiche un message spécifique
-            if (role === "prof") {
-                setError("Vous avez été inscrit, mais vous devez contacter un administrateur pour recevoir votre rôle.");
-            } else {
-                // Redirige l'utilisateur vers la page d'accueil si c'est un étudiant
-                navigate("/");
-            }
+  
+        if (apiResponse.ok) {
+          if (role === "prof") {
+            setError("Vous avez été inscrit, mais vous devez contacter un administrateur pour recevoir votre rôle.");
+          } else {
+            navigate("/");
+          }
         } else {
-            // Gestion des erreurs venant du backend
-            const result = await response.json();  // Récupère le message d'erreur envoyé par le backend
-            setError(result.message || "Erreur lors de l'insertion dans la base de données.");
+          const result = await apiResponse.json();
+          setError(result.message || "Erreur lors de l'insertion dans la base de données.");
         }
+      }
     } catch (err) {
-        setError(err?.message || "Erreur lors de l'inscription !");
+      setError(err?.message || "Erreur lors de l'inscription !");
     } finally {
-        setLoading(false);
+      setLoading(false);
     }
-};
-
-
+  };
   
   return (
     <ThemeProvider theme={theme}>

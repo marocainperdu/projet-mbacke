@@ -6,6 +6,8 @@ import {
 import NotificationsIcon from '@mui/icons-material/Notifications';
 import axios from 'axios';
 
+const apiUrl = "http://localhost:3000"; // Remplace par l'URL de ton backend
+
 const Notifications = () => {
   const [notifications, setNotifications] = useState([]);
 
@@ -16,7 +18,7 @@ const Notifications = () => {
   // Récupérer les notifications depuis l'API
   const fetchNotifications = async () => {
     try {
-      const res = await axios.get("http://localhost:5000/api/notifications");
+      const res = await axios.get(`${apiUrl}/api/notifications`);
       setNotifications(Array.isArray(res.data) ? res.data : []);
     } catch (err) {
       console.error("Erreur API notifications :", err);
@@ -28,7 +30,7 @@ const Notifications = () => {
   // Marquer une notification comme lue
   const markAsRead = async (id) => {
     try {
-      await axios.put(`http://localhost:5000/api/notifications/${id}/read`);
+      await axios.put(`${apiUrl}/api/notifications/${id}/read`);
       setNotifications(notifications.map(n => n.id === id ? { ...n, read: true } : n));
     } catch (err) {
       console.error("Erreur lors de la mise à jour de la notification :", err);
@@ -38,7 +40,7 @@ const Notifications = () => {
   // Marquer toutes les notifications comme lues
   const markAllAsRead = async () => {
     try {
-      await axios.put("http://localhost:5000/api/notifications/read-all");
+      await axios.put(`${apiUrl}/api/notifications/read-all`);
       setNotifications(notifications.map(n => ({ ...n, read: true })));
     } catch (err) {
       console.error("Erreur lors de la mise à jour des notifications :", err);

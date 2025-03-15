@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Container,
   Typography,
@@ -19,6 +19,10 @@ import {
 } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
 import AddIcon from "@mui/icons-material/Add";
+import { Client, Account } from "appwrite";
+
+
+const apiUrl = "http://localhost:3000"; // Remplace par l'URL de ton backend
 
 const Subjects = () => {
   const [open, setOpen] = useState(false);
@@ -31,19 +35,86 @@ const Subjects = () => {
     description: "",
     file: null,
   });
+const [teacherId, setTeacherId] = useState(null);  // Nouveau state pour l'ID du professeur
+const client = new Client().setEndpoint("https://appwrite.momokabil.duckdns.org/v1").setProject("67cd9f540022aae0f0f5");
+const account = new Account(client);
+const [teacherName, setTeacherName] = useState(null);
+useEffect(() => {
+  const today = new Date();
+  const nextWeek = new Date(today.setDate(today.getDate() + 7)); // Ajouter 7 jours à la date actuelle
+  const formattedDate = nextWeek.toISOString().split("T")[0]; // Formater au format YYYY-MM-DD
+  setNewSubject((prev) => ({
+    ...prev,
+    deadline: formattedDate, // Définir la date par défaut
+  }));
+}, []);
+
+useEffect(() => {
+    const fetchTeacherName = async () => {
+        try {
+            const user = await account.get(); // Récupère l'utilisateur connecté
+            setTeacherName(user.name); // Stocke le nom de l'utilisateur (supposé être le nom du professeur)
+        } catch (error) {
+            console.error("Erreur lors de la récupération des infos de l'utilisateur :", error);
+        }
+    };
+
+    fetchTeacherName();
+}, []); // Exécute une fois à l'initialisation
+
+useEffect(() => {
+    if (!teacherName) return; // Ne fait rien si teacherName est null
+
+    const fetchTeacherId = async () => {
+        try {
+            const response = await fetch(`${apiUrl}/get-teacher-id?name=${encodeURIComponent(teacherName)}`);
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.error || "Erreur inconnue");
+            }
+
+            setTeacherId(data.teacher_id); // Met à jour teacherId avec la réponse
+        } catch (error) {
+            console.error("Erreur lors de la récupération de l'ID du professeur :", error);
+        }
+    };
+
+    fetchTeacherId();
+}, [teacherName]); // Exécute la requête chaque fois que teacherName est mis à jour
+
+
+
+  // Récupérer les sujets depuis le backend
+  useEffect(() => {
+    const fetchSubjects = async () => {
+      try {
+        const response = await fetch(`${apiUrl}/get-sujets`);
+        const data = await response.json();
+        setSubjects(data);
+      } catch (error) {
+        console.error("Erreur lors de la récupération des sujets", error);
+      }
+    };
+    fetchSubjects();
+  }, []);
 
   const handleOpen = () => setOpen(true);
   const handleClose = () => setOpen(false);
 
   const handleChange = (e) => {
-    setNewSubject({ ...newSubject, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    setNewSubject((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
   };
 
   const handleFileChange = (e) => {
     setNewSubject({ ...newSubject, file: e.target.files[0] });
   };
 
-  const handleAddSubject = () => {
+  const handleAddSubject = async () => {
     if (
       !newSubject.title ||
       !newSubject.subject ||
@@ -55,23 +126,64 @@ const Subjects = () => {
       return;
     }
 
-    setSubjects([...subjects, { ...newSubject, id: subjects.length + 1 }]);
-    setNewSubject({ title: "", subject: "", professor: "", deadline: "", description: "", file: null });
-    setOpen(false);
+    // Si l'ID du professeur n'est pas défini, ne pas soumettre
+    if (!teacherId) {
+      alert("Impossible de récupérer l'ID du professeur");
+      return;
+    }
+
+    // Envoi de la requête POST au backend pour ajouter un sujet
+    const formData = new FormData();
+    formData.append("title", newSubject.title);
+    formData.append("subject", newSubject.subject);
+    formData.append("professor", newSubject.professor);
+    formData.append("deadline", newSubject.deadline);
+    formData.append("description", newSubject.description);
+    formData.append("teacher_id", teacherId);  // Ajouter l'ID du professeur
+    if (newSubject.file) {
+      formData.append("file", newSubject.file);
+    }
+
+    try {
+      const response = await fetch(`${apiUrl}/api/sujets`, {
+        method: "POST",
+        body: formData,
+      });
+      const data = await response.json();
+      setSubjects([...subjects, data]);
+      setNewSubject({
+        title: "",
+        subject: "",
+        professor: "",
+        deadline: "",
+        description: "",
+        file: null,
+      });
+      setOpen(false);
+    } catch (error) {
+      console.error("Erreur lors de l'ajout du sujet", error);
+    }
   };
 
-  const handleDeleteSubject = (id) => {
-    setSubjects(subjects.filter((subject) => subject.id !== id));
+  const handleDeleteSubject = async (id) => {
+    try {
+      await fetch(`${apiUrl}/subjects/${id}`, {
+        method: "DELETE",
+      });
+      setSubjects(subjects.filter((subject) => subject.id !== id));
+    } catch (error) {
+      console.error("Erreur lors de la suppression du sujet", error);
+    }
   };
+
+  newSubject.professor = teacherName; // Remplace le champ Professeur par le nom du professeur
 
   return (
     <Container>
-      {/* HEADER */}
       <Typography variant="h5" align="center" sx={{ mt: 3, mb: 3 }}>
         📚 Sujets d'Examens
       </Typography>
 
-      {/* BOUTON AJOUTER UN SUJET */}
       <Button
         variant="contained"
         startIcon={<AddIcon />}
@@ -81,7 +193,6 @@ const Subjects = () => {
         Ajouter un Sujet
       </Button>
 
-      {/* TABLE DES SUJETS */}
       <TableContainer component={Paper} sx={{ width: "100%", overflowX: "auto" }}>
         <Table sx={{ minWidth: 800 }}>
           <TableHead>
@@ -133,7 +244,6 @@ const Subjects = () => {
         </Table>
       </TableContainer>
 
-      {/* DIALOG AJOUT SUJET */}
       <Dialog open={open} onClose={handleClose}>
         <DialogTitle>Ajouter un Sujet</DialogTitle>
         <DialogContent>
@@ -162,14 +272,14 @@ const Subjects = () => {
             sx={{ mb: 2 }}
           />
           <TextField
-            fullWidth
-            type="date"
-            label="Date limite"
-            name="deadline"
-            InputLabelProps={{ shrink: true }}
-            value={newSubject.deadline}
-            onChange={handleChange}
-            sx={{ mb: 2 }}
+              fullWidth
+              type="date"
+              label="Date limite"
+              name="deadline"
+              InputLabelProps={{ shrink: true }}
+              value={newSubject.deadline}
+              onChange={handleChange}
+              sx={{ mb: 2 }}
           />
           <TextField
             fullWidth

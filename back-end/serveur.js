@@ -3,6 +3,7 @@ const express = require("express");
 const mysql = require("mysql2");
 const cors = require("cors");
 const bcrypt = require("bcrypt");
+const multer = require("multer");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -12,6 +13,17 @@ app.use(cors({
     methods: ["GET", "POST", "PUT", "DELETE"], // Méthodes autorisées
     allowedHeaders: ["Content-Type"] // En-têtes autorisés
 }));
+
+// Configuration de multer pour le téléchargement des fichiers
+const storage = multer.diskStorage({
+    destination: (req, file, cb) => {
+        cb(null, "uploads/"); // Dossier où les fichiers seront stockés
+    },
+    filename: (req, file, cb) => {
+        cb(null, Date.now() + "-" + file.originalname);
+    },
+});
+const upload = multer({ storage });
 
 app.use(express.json());
 
@@ -31,7 +43,22 @@ db.connect((err) => {
     console.log("✅ Connecté à MySQL");
 });
 
+app.get('/get-teacher-id', (req, res) => {
+    const { name } = req.query;
+  
+    db.query('SELECT id FROM users WHERE name = ?', [name], (err, result) => {
+      if (err) {
+        return res.status(500).json({ error: 'Erreur de base de données' });
+      }
+      if (result.length === 0) {
+        return res.status(404).json({ error: 'Utilisateur non trouvé' });
+      }
+  
+      res.json({ teacher_id: result[0].id });
+    });
+  });
 
+// Création d'un Utilisateur
 app.post("/api/new-user", async (req, res) => {
     const { email, password, name, role } = req.body;
 
@@ -39,10 +66,8 @@ app.post("/api/new-user", async (req, res) => {
         return res.status(400).json({ message: "Tous les champs sont requis" });
     }
 
-    // Hachage du mot de passe avant de l'enregistrer
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Requête SQL pour insérer l'utilisateur dans la base de données
     const sql = `
       INSERT INTO users (email, password, name, role) 
       VALUES (?, ?, ?, ?)
@@ -58,7 +83,7 @@ app.post("/api/new-user", async (req, res) => {
     });
 });
 
-// Notifications
+// Afficher les notifications
 app.get("/notifications", (req, res) => {
     const query = "SELECT * FROM notifications ORDER BY created_at DESC";
     db.query(query, (err, results) => {
@@ -85,41 +110,40 @@ app.delete("/notifications/:id", (req, res) => {
     });
 });
 
-// Fonction de création de notification
-const createNotification = (userId, message) => {
-    const query = "INSERT INTO notifications (user_id, message) VALUES (?, ?)";
-    db.query(query, [userId, message], (err) => {
-        if (err) console.error("❌ Erreur lors de la création de la notification :", err);
-    });
-};
-
-// Création d'un examen
-app.post("/enseignant/examen", (req, res) => {
-    const { titre, description, date_debut, date_fin, duree } = req.body;
-    const query = "INSERT INTO examens (titre, description, date_debut, date_fin, duree) VALUES (?, ?, ?, ?, ?)";
-
-    db.query(query, [titre, description, date_debut, date_fin, duree], (err, results) => {
-        if (err) return res.status(500).json({ message: "Erreur lors de la création de l'examen" });
-
-        createNotification(req.body.userId, `Votre examen "${titre}" a été créé.`);
-        res.status(201).json({ message: "Examen créé avec succès", id: results.insertId });
-    });
-});
-
-// Routes test
-app.get("/jeledonneaprs", (req, res) => {
-    res.send("Bienvenue");
-});
-
-app.get("/after", (req, res) => {
-    db.query("SELECT * FROM votre_table", (err, results) => {
+// Créer un nouveau sujet
+app.post('/add-exam', (req, res) => {
+    const { title, description, file_path, teacher_id } = req.body;
+  
+    db.query(
+      'INSERT INTO exams (title, description, file_path, teacher_id) VALUES (?, ?, ?, ?)',
+      [title, description, file_path, teacher_id],
+      (err, result) => {
         if (err) {
-            console.error("❌ Erreur :", err);
-            return res.status(500).json({ error: "Erreur" });
+          return res.status(500).json({ error: 'Erreur lors de l\'ajout de l\'examen' });
         }
+        res.json({ success: true, exam_id: result.insertId });
+      }
+    );
+  });  
+
+// Récupérer tous les sujets
+app.get("/get-sujets", (req, res) => {
+    const query = "SELECT * FROM sujets ORDER BY deadline DESC";
+    db.query(query, (err, results) => {
+        if (err) return res.status(500).json({ message: "Erreur lors de la récupération des sujets" });
         res.json(results);
     });
 });
+
+// Supprimer un sujet
+app.delete("/api/sujets/:id", (req, res) => {
+    const query = "DELETE FROM sujets WHERE id = ?";
+    db.query(query, [req.params.id], (err) => {
+        if (err) return res.status(500).json({ message: "Erreur lors de la suppression du sujet" });
+        res.json({ message: "Sujet supprimé avec succès" });
+    });
+});
+
 
 // Démarrage du serveur
 app.listen(PORT, () => {

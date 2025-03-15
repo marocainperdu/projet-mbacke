@@ -131,6 +131,8 @@ function DemoPageContent({ router }) {
       }}
     >
       {pathname.startsWith('/dashboard') ? <Dashboard /> : null}
+      {pathname.startsWith('/dashprof') ? <Dashboard /> : null}
+      {pathname.startsWith('/tool') ? <Dashboard /> : null}
       {pathname.startsWith('/subjects') ? <Subjects /> : null}
       {pathname.startsWith('/papers') ? <Papers /> : null}
       {pathname.startsWith('/plagiarism') ? <Plagiarism /> : null}

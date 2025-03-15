@@ -8,6 +8,8 @@ import LogoutIcon from '@mui/icons-material/Logout';
 import AddIcon from '@mui/icons-material/Add';
 import axios from 'axios';
 
+const apiUrl = "http://localhost:3000"; // Remplace par l'URL de ton backend
+
 const DashboardProf = () => {
   const [stats, setStats] = useState({
     totalExams: 0,
@@ -15,15 +17,16 @@ const DashboardProf = () => {
     notifications: 0
   });
 
+
   const [exams, setExams] = useState([]);
 
   // Simuler la récupération des statistiques et examens
   useEffect(() => {
-    axios.get("http://localhost:5000/api/stats")
+    axios.get(`${apiUrl}/api/stats`)
       .then((res) => setStats(res.data))
       .catch((err) => console.error("Erreur API stats :", err));
 
-    axios.get("http://localhost:5000/api/exams")
+    axios.get(`${apiUrl}/api/exams`)
       .then((res) => setExams(Array.isArray(res.data) ? res.data : []))
       .catch((err) => console.error("Erreur API exams :", err));
   }, []);
