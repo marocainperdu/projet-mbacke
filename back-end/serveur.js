@@ -1,186 +1,290 @@
+require("dotenv").config();
 const express = require("express");
 const mysql = require("mysql2");
 const cors = require("cors");
 const bcrypt = require("bcrypt");
-const jwt = require("jsonwebtoken");
+const multer = require("multer");
+const path = require("path");
 
 const app = express();
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 
+app.use(cors({
+    origin: "http://localhost:5173", // Remplace par l'origine de ton frontend
+    methods: ["GET", "POST", "PUT", "DELETE"], 
+    allowedHeaders: ["Content-Type"]
+}));
+
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use(express.json());
-app.use(cors());
+app.use(express.urlencoded({ extended: true })); // Pour parser les requêtes form-data
 
+// Configuration de multer pour le téléchargement des fichiers
+const storage = multer.diskStorage({
+    destination: function (req, file, cb) {
+      cb(null, "uploads/");
+    },
+    filename: function (req, file, cb) {
+      const fileExtension = file.originalname.split(".").pop();
+      const fileName = `${req.body.teacher_id}-${Date.now()}.${fileExtension}`;
+      cb(null, fileName);
+    },
+  });
+  const upload = multer({ storage: storage });
+
+// Connexion sécurisée à MySQL
 const db = mysql.createConnection({
-    host: "sql.momokabil.duckdns.org", 
-    user: "root",
-    password: "7C2742Regy8kCC9VKYoub2",
-    database: "mbacke-projet",
+    host: process.env.DB_HOST, 
+    user: process.env.DB_USER,
+    password: process.env.DB_PASSWORD,
+    database: process.env.DB_NAME,
 });
 
 db.connect((err) => {
     if (err) {
-        console.error("Erreur ", err);
+        console.error("❌ Erreur de connexion à MySQL :", err);
         process.exit(1);
     }
-    console.log("Connecté à la base de données");
+    console.log("✅ Connecté à MySQL");
 });
 
-// Middleware d'authentification
-const authenticateToken = (req, res, next) => {
-    const token = req.headers['authorization']?.split(' ')[1];
-    if (!token) return res.status(401).json({ message: "Token manquant" });
-
-    jwt.verify(token, 'votre_secret_jwt', (err, user) => {
-        if (err) return res.status(403).json({ message: "Token invalide" });
-        req.user = user;
-        next();
-    });
-};
-
-// Route d'inscription
-app.post("/register", async (req, res) => {
-    const { username, email, password, role } = req.body;
-    const hashedPassword = await bcrypt.hash(password, 10);
-
-    const query = "INSERT INTO users (username, email, password, role) VALUES (?, ?, ?, ?)";
-    db.query(query, [username, email, hashedPassword, role], (err, results) => {
-        if (err) {
-            console.error("Erreur d'inscription:", err);
-            res.status(500).json({ message: "Erreur lors de l'inscription" });
-        } else {
-            res.status(201).json({ message: "Inscription réussie" });
-        }
+app.get('/get-teacher-id', (req, res) => {
+    const { name } = req.query;
+    db.query('SELECT id FROM users WHERE name = ?', [name], (err, result) => {
+        if (err) return res.status(500).json({ error: 'Erreur de base de données' });
+        if (result.length === 0) return res.status(404).json({ error: 'Utilisateur non trouvé' });
+        res.json({ teacher_id: result[0].id });
     });
 });
 
-// Route de connexion
-app.post("/login", async (req, res) => {
-    const { email, password } = req.body;
-
-    const query = "SELECT * FROM users WHERE email = ?";
-    db.query(query, [email], async (err, results) => {
-        if (err) {
-            return res.status(500).json({ message: "Erreur serveur" });
-        }
-        if (results.length === 0) {
-            return res.status(401).json({ message: "Email ou mot de passe incorrect" });
-        }
-
-        const user = results[0];
-        const validPassword = await bcrypt.compare(password, user.password);
-        
-        if (!validPassword) {
-            return res.status(401).json({ message: "Email ou mot de passe incorrect" });
-        }
-
-        const token = jwt.sign(
-            { id: user.id, email: user.email, role: user.role },
-            'votre_secret_jwt',
-            { expiresIn: '24h' }
-        );
-
-        res.json({ token, user: { id: user.id, email: user.email, role: user.role } });
-    });
-});
-
-// Routes spécifiques aux enseignants
-app.get("/enseignant/dashboard", authenticateToken, (req, res) => {
-    if (req.user.role !== 'enseignant') {
-        return res.status(403).json({ message: "Accès non autorisé" });
+// Création d'un Utilisateur
+app.post("/api/new-user", async (req, res) => {
+    const { email, password, name, role } = req.body;
+    if (!email || !password || !name || !role) {
+        return res.status(400).json({ message: "Tous les champs sont requis" });
     }
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const sql = `INSERT INTO users (email, password, name, role) VALUES (?, ?, ?, ?)`;
 
-    const query = "SELECT * FROM examens WHERE enseignant_id = ?";
-    db.query(query, [req.user.id], (err, results) => {
-        if (err) {
-            return res.status(500).json({ message: "Erreur serveur" });
-        }
+    db.query(sql, [email, hashedPassword, name, role], (err, results) => {
+        if (err) return res.status(500).json({ message: "Erreur lors de l'insertion dans la base de données" });
+        res.status(201).json({ message: "Utilisateur ajouté avec succès", userId: results.insertId });
+    });
+});
+
+// Gestion des notifications
+app.get("/notifications", (req, res) => {
+    db.query("SELECT * FROM notifications ORDER BY created_at DESC", (err, results) => {
+        if (err) return res.status(500).json({ message: "Erreur lors de la récupération des notifications" });
         res.json(results);
     });
 });
 
-// Création d'un examen
-app.post("/enseignant/examen", authenticateToken, (req, res) => {
-    if (req.user.role !== 'enseignant') {
-        return res.status(403).json({ message: "Accès non autorisé" });
-    }
-
-    const { titre, description, date_debut, date_fin, duree } = req.body;
-    const query = "INSERT INTO examens (titre, description, date_debut, date_fin, duree, enseignant_id) VALUES (?, ?, ?, ?, ?, ?)";
-    
-    db.query(query, [titre, description, date_debut, date_fin, duree, req.user.id], (err, results) => {
-        if (err) {
-            return res.status(500).json({ message: "Erreur lors de la création de l'examen" });
-        }
-        res.status(201).json({ message: "Examen créé avec succès", id: results.insertId });
+app.put("/notifications/:id/read", (req, res) => {
+    db.query("UPDATE notifications SET is_read = 1 WHERE id = ?", [req.params.id], (err) => {
+        if (err) return res.status(500).json({ message: "Erreur lors de la mise à jour de la notification" });
+        res.json({ message: "Notification marquée comme lue" });
     });
 });
 
-// Ajout de questions à un examen
-app.post("/enseignant/examen/:examenId/questions", authenticateToken, (req, res) => {
-    if (req.user.role !== 'enseignant') {
-        return res.status(403).json({ message: "Accès non autorisé" });
-    }
-
-    const { questions } = req.body;
-    const examenId = req.params.examenId;
-
-    // Vérifier que l'examen appartient à l'enseignant
-    const checkQuery = "SELECT * FROM examens WHERE id = ? AND enseignant_id = ?";
-    db.query(checkQuery, [examenId, req.user.id], (err, results) => {
-        if (err || results.length === 0) {
-            return res.status(403).json({ message: "Accès non autorisé à cet examen" });
-        }
-
-        // Insérer les questions
-        const insertQuery = "INSERT INTO questions (examen_id, question, reponse_correcte, points) VALUES ?";
-        const values = questions.map(q => [examenId, q.question, q.reponse_correcte, q.points]);
-        
-        db.query(insertQuery, [values], (err, results) => {
-            if (err) {
-                return res.status(500).json({ message: "Erreur lors de l'ajout des questions" });
-            }
-            res.status(201).json({ message: "Questions ajoutées avec succès" });
-        });
+app.delete("/notifications/:id", (req, res) => {
+    db.query("DELETE FROM notifications WHERE id = ?", [req.params.id], (err) => {
+        if (err) return res.status(500).json({ message: "Erreur lors de la suppression de la notification" });
+        res.json({ message: "Notification supprimée" });
     });
 });
 
-// Obtenir les résultats d'un examen
-app.get("/enseignant/examen/:examenId/resultats", authenticateToken, (req, res) => {
-    if (req.user.role !== 'enseignant') {
-        return res.status(403).json({ message: "Accès non autorisé" });
+// Ajout d'un examen
+app.post("/add-exam", (req, res, next) => {
+    upload.single("file")(req, res, (err) => {
+      if (err) {
+        return res.status(400).json({ error: "Erreur lors du téléchargement du fichier" });
+      }
+  
+      const { title, description, teacher_id, deadline } = req.body;
+      const file_path = req.file ? `/uploads/${req.file.filename}` : null;
+  
+      if (!title || !description || !teacher_id || !file_path || !deadline) {
+        return res.status(400).json({ error: "Tous les champs sont requis" });
+      }
+  
+      db.query(
+        "INSERT INTO exams (title, description, teacher_id, deadline, file_path) VALUES (?, ?, ?, ?, ?)",
+        [title, description, teacher_id, deadline, file_path],
+        (err, result) => {
+          if (err) {
+            console.error("Erreur SQL :", err);
+            return res.status(500).json({ error: "Erreur lors de l'ajout de l'examen" });
+          }
+          res.json({ success: true, exam_id: result.insertId, file_path });
+        }
+      );
+    });
+  });
+  
+// Récupération des examens
+app.get("/get-sujets", (req, res) => {
+    db.query("SELECT * FROM exams ORDER BY created_at DESC", (err, results) => {
+        if (err) return res.status(500).json({ message: "Erreur lors de la récupération des sujets" });
+        res.json(results);
+    });
+});
+
+// Récupération des copies des étudiants
+app.get("/get-copies", (req, res) => {
+    const examId = req.query.exam_id; // Récupérer l'examen sélectionné depuis la query string
+
+    if (!examId) {
+        return res.status(400).json({ message: "Exam ID est requis" });
     }
 
-    const examenId = req.params.examenId;
     const query = `
-        SELECT r.*, u.username 
-        FROM resultats r 
-        JOIN users u ON r.etudiant_id = u.id 
-        WHERE r.examen_id = ? AND r.examen_id IN (SELECT id FROM examens WHERE enseignant_id = ?)
+        SELECT 
+        s.id AS submission_id, 
+        e.title AS exam_title, 
+        u.name AS student_name, 
+        s.file_path AS submission_file, 
+        s.submitted_at AS submission_date,
+        g.grade AS finalGrade,      -- Note finale venant de la table grades
+        g.comments AS comment      -- Commentaires venant de la table grades
+        FROM submissions s
+        JOIN exams e ON s.exam_id = e.id
+        JOIN users u ON s.student_id = u.id
+        LEFT JOIN grades g ON s.id = g.submission_id   -- Jointure avec grades pour récupérer les notes et commentaires
+        WHERE s.exam_id = ?      -- Filtrer par exam_id
+        ORDER BY s.submitted_at DESC;
+
     `;
 
-    db.query(query, [examenId, req.user.id], (err, results) => {
+    db.query(query, [examId], (err, results) => {
         if (err) {
-            return res.status(500).json({ message: "Erreur serveur" });
+            console.error("Erreur lors de la récupération des copies :", err);
+            return res.status(500).json({ message: "Erreur lors de la récupération des copies" });
         }
         res.json(results);
     });
 });
 
-app.get("/jeledonneaprs", (req, res) => {
-    res.send("Bienvenue");
-});
+// Mise à jour de la note finale d'une copie
+app.put("/copies/:id", (req, res) => {
+    const { finalGrade, corrected_by } = req.body; // Récupérer la note et l'ID du professeur envoyés dans la requête
+    const { id } = req.params; // Récupérer l'ID de la copie à partir de l'URL
 
-app.get("after", (req, res) => {
-    db.query("Requete souhaitee", (err, results) => {
+    // Vérifier que la note finale et l'ID du professeur sont présents
+    if (finalGrade === undefined || corrected_by === undefined) {
+        return res.status(400).json({ message: "La note finale et l'ID du professeur sont requis" });
+    }
+
+    const checkQuery = `
+        SELECT * FROM grades WHERE submission_id = ?
+    `;
+    
+    // Vérifier si la note existe déjà dans la table grades
+    db.query(checkQuery, [id], (err, result) => {
         if (err) {
-            console.error("Erreur", err);
-            res.status(500).json({ error: "Erreur" });
+            console.error("Erreur lors de la vérification de la note :", err);
+            return res.status(500).json({ message: "Erreur lors de la vérification de la note" });
+        }
+
+        if (result.length > 0) {
+            // Si la note existe déjà, mettez à jour la note
+            const updateQuery = `
+                UPDATE grades
+                SET grade = ?, corrected_by = ?
+                WHERE submission_id = ?
+            `;
+            db.query(updateQuery, [finalGrade, corrected_by, id], (err, result) => {
+                if (err) {
+                    console.error("Erreur lors de la mise à jour de la note :", err);
+                    return res.status(500).json({ message: "Erreur lors de la mise à jour de la note" });
+                }
+
+                if (result.affectedRows === 0) {
+                    return res.status(404).json({ message: "Copie non trouvée ou note déjà mise à jour" });
+                }
+
+                res.json({ message: "Note finale mise à jour avec succès" });
+            });
         } else {
-            res.json(results);
+            // Si la note n'existe pas, insérez une nouvelle note
+            const insertQuery = `
+                INSERT INTO grades (submission_id, grade, corrected_by)
+                VALUES (?, ?, ?)
+            `;
+            db.query(insertQuery, [id, finalGrade, corrected_by], (err, result) => {
+                if (err) {
+                    console.error("Erreur lors de l'insertion de la note :", err);
+                    return res.status(500).json({ message: "Erreur lors de l'insertion de la note" });
+                }
+
+                res.json({ message: "Note finale insérée avec succès" });
+            });
         }
     });
 });
 
+
+// Route pour obtenir les statistiques
+app.get('/stats', (req, res) => {
+    const teacherId = req.query.teacherId; // Récupérer l'ID depuis les query params
+
+    if (!teacherId) {
+        return res.status(400).json({ message: "ID du professeur manquant" });
+    }
+
+    const statsQuery = `
+        SELECT 
+            (SELECT COUNT(*) FROM exams WHERE teacher_id = ?) AS totalExams, 
+            (SELECT COUNT(*) 
+            FROM submissions s 
+            JOIN exams e ON s.exam_id = e.id 
+            WHERE e.teacher_id = ?) AS copiesCorrigees
+    `;
+
+    db.query(statsQuery, [teacherId, teacherId], (err, result) => {
+        if (err) {
+            console.error("Erreur lors de la récupération des statistiques :", err);
+            return res.status(500).json({ message: "Erreur lors de la récupération des statistiques" });
+        }
+
+        res.json(result[0]);
+    });
+});
+
+
+
+// Route pour récupérer les examens
+app.get('/exams', (req, res) => {
+    const query = `
+      SELECT 
+        exams.id, 
+        exams.title, 
+        exams.deadline,
+        COUNT(submissions.id) AS copies
+      FROM exams
+      LEFT JOIN submissions ON exams.id = submissions.exam_id
+      GROUP BY exams.id
+    `;
+  
+    db.query(query, (err, result) => {
+      if (err) {
+        console.error("Erreur lors de la récupération des examens :", err);
+        return res.status(500).json({ message: "Erreur lors de la récupération des examens" });
+      }
+  
+      res.json(result);
+    });
+  });  
+
+// Suppression d'un sujet
+app.delete("/subjects/:id", (req, res) => {
+    db.query("DELETE FROM exams WHERE id = ?", [req.params.id], (err) => {
+        if (err) return res.status(500).json({ message: "Erreur lors de la suppression du sujet" });
+        res.json({ message: "Sujet supprimé avec succès" });
+    });
+});
+
+// Démarrage du serveur
 app.listen(PORT, () => {
-    console.log(`Serveur démarré http://localhost:${PORT}`);
+    console.log(`🚀 Serveur démarré : http://localhost:${PORT}`);
 });
