@@ -3,18 +3,10 @@ import { extendTheme, styled } from '@mui/material/styles';
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import LibraryBooksIcon from '@mui/icons-material/LibraryBooks';
 import AssignmentIcon from '@mui/icons-material/Assignment';
-import ReportIcon from '@mui/icons-material/Report';
-import ChatIcon from '@mui/icons-material/Chat';
-import NotificationsIcon from '@mui/icons-material/Notifications';
-import BarChartIcon from '@mui/icons-material/BarChart';
 import PropTypes from 'prop-types';
 import Subjects from './Subjects';
 import Papers from './Papers';
-import Notif from './Notif';
 import Dashboard from './Dashboard';
-import Rapport from './Reports';
-import User from './User';
-import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import { AppProvider } from '@toolpad/core/AppProvider';
 import { DashboardLayout } from '@toolpad/core/DashboardLayout';
 import Box from '@mui/material/Box';
@@ -29,9 +21,6 @@ const NAVIGATION = [
   { kind: 'header', title: 'Examen' },
   { segment: 'subjects', title: 'Sujets d\'Examen', icon: <LibraryBooksIcon /> },
   { segment: 'papers', title: 'Copies et Corrections', icon: <AssignmentIcon /> },
-  { kind: 'divider' },
-  { kind: 'header', title: 'Utilisateur' },
-  { kind: 'logo', segment: 'user', title: 'Utilisateur', icon: <AccountCircleIcon /> },
 ];
 
 // --- Configuration du thème ---
@@ -125,11 +114,6 @@ function DemoPageContent({ router }) {
       {pathname.startsWith('/tool') ? <Dashboard /> : null}
       {pathname.startsWith('/subjects') ? <Subjects /> : null}
       {pathname.startsWith('/papers') ? <Papers /> : null}
-      {pathname.startsWith('/plagiarism') ? <Plagiarism /> : null}
-      {pathname.startsWith('/chatbot') ? <Chatbot /> : null}
-      {pathname.startsWith('/notifications') ? <Notif /> : null}
-      {pathname.startsWith('/reports') ? <Rapport /> : null}
-      {pathname.startsWith('/user') ? <User /> : null}
     </Box>
   );
 }
