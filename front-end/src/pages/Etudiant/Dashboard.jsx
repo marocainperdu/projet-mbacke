@@ -2,12 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { 
   AppBar, Toolbar, Typography, Container, Grid, Paper, Card, 
   CardContent, Button, Table, TableBody, TableCell, TableContainer, 
-  TableHead, TableRow, IconButton
+  TableHead, TableRow, IconButton 
 } from '@mui/material';
 import LogoutIcon from '@mui/icons-material/Logout';
-import AddIcon from '@mui/icons-material/Add';
 import axios from 'axios';
-import { Client, Account } from "appwrite"; // Import correct pour Appwrite
+import { Client, Account } from "appwrite";
 
 const apiUrl = "http://localhost:3000"; // Remplace par ton API backend
 
@@ -17,64 +16,64 @@ const client = new Client()
 
 const account = new Account(client);
 
-const DashboardProf = () => {
-  const [teacherName, setTeacherName] = useState(""); // Nom du professeur
-  const [teacherId, setTeacherId] = useState(null); // ID du professeur
+const DashboardEtudiant = () => {
+  const [studentName, setStudentName] = useState(""); // Nom de l'étudiant
+  const [studentId, setStudentId] = useState(null); // ID de l'étudiant
   const [stats, setStats] = useState({
     totalExams: 0,
-    copiesCorrigees: 0
+    examsSubmitted: 0
   });
   const [exams, setExams] = useState([]);
 
-  // Récupération du nom du professeur depuis Appwrite
+  // Récupération du nom de l'étudiant depuis Appwrite
   useEffect(() => {
-    const fetchTeacherName = async () => {
+    const fetchStudentName = async () => {
       try {
         const user = await account.get();
-        setTeacherName(user.name);
+        setStudentName(user.name);
       } catch (error) {
-        console.error("Erreur lors de la récupération des infos de l'utilisateur :", error);
+        console.error("Erreur récupération utilisateur :", error);
       }
     };
 
-    fetchTeacherName();
+    fetchStudentName();
   }, []);
 
-  // Récupération de l'ID du professeur
+  // Récupération de l'ID de l'étudiant
   useEffect(() => {
-    if (!teacherName) return;
+    if (!studentName) return;
 
-    const fetchTeacherId = async () => {
+    const fetchStudentId = async () => {
       try {
-        const response = await fetch(`${apiUrl}/get-teacher-id?name=${encodeURIComponent(teacherName)}`);
+        const response = await fetch(`${apiUrl}/get-student-id?name=${encodeURIComponent(studentName)}`);
         const data = await response.json();
 
         if (!response.ok) {
           throw new Error(data.error || "Erreur inconnue");
         }
 
-        setTeacherId(data.teacher_id); // Stocke l'ID du professeur
+        setStudentId(data.student_id); // Stocke l'ID de l'étudiant
       } catch (error) {
-        console.error("Erreur lors de la récupération de l'ID du professeur :", error);
+        console.error("Erreur récupération ID étudiant :", error);
       }
     };
 
-    fetchTeacherId();
-  }, [teacherName]);
+    fetchStudentId();
+  }, [studentName]);
 
-  // Récupération des statistiques et des examens une fois que l'ID du professeur est récupéré
+  // Récupération des statistiques et des examens une fois l'ID obtenu
   useEffect(() => {
-    if (!teacherId) return;
+    if (!studentId) return;
 
-    axios.get(`${apiUrl}/stats?teacherId=${teacherId}`)
+    axios.get(`${apiUrl}/student-stats?studentId=${studentId}`)
       .then((res) => setStats(res.data))
       .catch((err) => console.error("Erreur API stats :", err));
 
-    axios.get(`${apiUrl}/exams?teacherId=${teacherId}`)
+    axios.get(`${apiUrl}/student-exams?studentId=${studentId}`)
       .then((res) => setExams(Array.isArray(res.data) ? res.data : []))
       .catch((err) => console.error("Erreur API exams :", err));
 
-  }, [teacherId]);
+  }, [studentId]);
 
   const handleLogout = () => {
     localStorage.removeItem('token');
@@ -93,7 +92,7 @@ const DashboardProf = () => {
       <AppBar position="static" sx={{ marginBottom: 3 }}>
         <Toolbar>
           <Typography variant="h6" sx={{ flexGrow: 1 }}>
-            Dashboard Professeur
+            Dashboard Étudiant
           </Typography>
           <IconButton color="inherit" onClick={handleLogout}>
             <LogoutIcon />
@@ -104,18 +103,18 @@ const DashboardProf = () => {
       {/* Statistiques */}
       <Grid container spacing={3}>
         <Grid item xs={12} sm={6}>
-          <Card sx={{ backgroundColor: "#3498db", color: "white" }}>
+          <Card sx={{ backgroundColor: "#f39c12", color: "white" }}>
             <CardContent>
-              <Typography variant="h5">Examens</Typography>
+              <Typography variant="h5">Examens à faire</Typography>
               <Typography variant="h4">{stats.totalExams}</Typography>
             </CardContent>
           </Card>
         </Grid>
         <Grid item xs={12} sm={6}>
-          <Card sx={{ backgroundColor: "#2ecc71", color: "white" }}>
+          <Card sx={{ backgroundColor: "#e74c3c", color: "white" }}>
             <CardContent>
-              <Typography variant="h5">Copies corrigées</Typography>
-              <Typography variant="h4">{stats.copiesCorrigees}</Typography>
+              <Typography variant="h5">Examens soumis</Typography>
+              <Typography variant="h4">{stats.examsSubmitted}</Typography>
             </CardContent>
           </Card>
         </Grid>
@@ -132,7 +131,7 @@ const DashboardProf = () => {
               <TableRow>
                 <TableCell>Titre</TableCell>
                 <TableCell>Deadline</TableCell>
-                <TableCell>Copies reçues</TableCell>
+                <TableCell>Statut</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -141,7 +140,13 @@ const DashboardProf = () => {
                   <TableRow key={exam.id}>
                     <TableCell>{exam.title}</TableCell>
                     <TableCell>{formatDate(exam.deadline)}</TableCell>
-                    <TableCell>{exam.copies}</TableCell>
+                    <TableCell>
+                      <span style={{
+                        color: exam.status === "Soumis" ? "green" : exam.status === "À faire" ? "red" : "blue"
+                      }}>
+                        {exam.status}
+                      </span>
+                    </TableCell>
                   </TableRow>
                 ))
               ) : (
@@ -159,4 +164,4 @@ const DashboardProf = () => {
   );
 };
 
-export default DashboardProf;
+export default DashboardEtudiant;
