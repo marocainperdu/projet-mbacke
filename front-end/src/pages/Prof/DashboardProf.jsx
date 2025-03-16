@@ -5,18 +5,13 @@ import LibraryBooksIcon from '@mui/icons-material/LibraryBooks';
 import AssignmentIcon from '@mui/icons-material/Assignment';
 import ReportIcon from '@mui/icons-material/Report';
 import ChatIcon from '@mui/icons-material/Chat';
-import NotificationsIcon from '@mui/icons-material/Notifications';
-import BarChartIcon from '@mui/icons-material/BarChart';
 import PropTypes from 'prop-types';
 import Plagiarism from "./Plagiarism";
 import Subjects from './Subjects';
 import Papers from './Papers';
 import Chatbot from './Chatbot';
-import Notif from './Notif';
+import InsightsIcon from '@mui/icons-material/Insights';
 import Dashboard from './Dashboard';
-import Rapport from './Reports';
-import User from './User';
-import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import { AppProvider } from '@toolpad/core/AppProvider';
 import { DashboardLayout } from '@toolpad/core/DashboardLayout';
 import Box from '@mui/material/Box';
@@ -34,14 +29,7 @@ const NAVIGATION = [
   { segment: 'plagiarism', title: 'Plagiat', icon: <ReportIcon /> },
   { kind: 'divider' },
   { kind: 'header', title: 'Support' },
-  { segment: 'chatbot', title: 'Chatbot d\'Assistance', icon: <ChatIcon /> },
-  { segment: 'notifications', title: 'Notifications', icon: <NotificationsIcon /> },
-  { kind: 'divider' },
-  { kind: 'header', title: 'Statistiques' },
-  { segment: 'reports', title: 'Rapport', icon: <BarChartIcon /> },
-  { kind: 'divider' },
-  { kind: 'header', title: 'Utilisateur' },
-  { kind: 'logo', segment: 'user', title: 'Utilisateur', icon: <AccountCircleIcon /> },
+  { segment: 'chatbot', title: 'Mbacke-AI', icon: <InsightsIcon /> },
 ];
 
 // --- Configuration du thème ---
@@ -137,9 +125,6 @@ function DemoPageContent({ router }) {
       {pathname.startsWith('/papers') ? <Papers /> : null}
       {pathname.startsWith('/plagiarism') ? <Plagiarism /> : null}
       {pathname.startsWith('/chatbot') ? <Chatbot /> : null}
-      {pathname.startsWith('/notifications') ? <Notif /> : null}
-      {pathname.startsWith('/reports') ? <Rapport /> : null}
-      {pathname.startsWith('/user') ? <User /> : null}
     </Box>
   );
 }

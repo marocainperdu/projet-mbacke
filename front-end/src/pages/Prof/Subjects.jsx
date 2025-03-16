@@ -17,6 +17,7 @@ import {
   TextField,
   IconButton,
 } from "@mui/material";
+import DownloadIcon from "@mui/icons-material/Download";
 import DeleteIcon from "@mui/icons-material/Delete";
 import AddIcon from "@mui/icons-material/Add";
 import { Client, Account } from "appwrite";
@@ -39,7 +40,6 @@ const Subjects = () => {
   const account = new Account(client);
   const [teacherName, setTeacherName] = useState(null);
 
-  // Fonction pour formater la date au format "22 mars 2025"
   const formatDate = (dateString) => {
     const date = new Date(dateString);
     const options = { day: "numeric", month: "long", year: "numeric" };
@@ -221,11 +221,11 @@ const Subjects = () => {
                   <TableCell>
                     {subject.file_path ? (
                       <Button
-                        variant="contained"
-                        color="primary"
+                      variant="outlined"
+                      startIcon={<DownloadIcon />}
                         onClick={() => window.open(`${apiUrl}${subject.file_path}`, "_blank")}
                       >
-                        Voir le sujet
+                        Télécharger
                       </Button>
                     ) : (
                       "Aucun fichier"

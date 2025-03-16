@@ -130,6 +130,152 @@ app.get("/get-sujets", (req, res) => {
     });
 });
 
+// Récupération des copies des étudiants
+app.get("/get-copies", (req, res) => {
+    const examId = req.query.exam_id; // Récupérer l'examen sélectionné depuis la query string
+
+    if (!examId) {
+        return res.status(400).json({ message: "Exam ID est requis" });
+    }
+
+    const query = `
+        SELECT 
+        s.id AS submission_id, 
+        e.title AS exam_title, 
+        u.name AS student_name, 
+        s.file_path AS submission_file, 
+        s.submitted_at AS submission_date,
+        g.grade AS finalGrade,      -- Note finale venant de la table grades
+        g.comments AS comment      -- Commentaires venant de la table grades
+        FROM submissions s
+        JOIN exams e ON s.exam_id = e.id
+        JOIN users u ON s.student_id = u.id
+        LEFT JOIN grades g ON s.id = g.submission_id   -- Jointure avec grades pour récupérer les notes et commentaires
+        WHERE s.exam_id = ?      -- Filtrer par exam_id
+        ORDER BY s.submitted_at DESC;
+
+    `;
+
+    db.query(query, [examId], (err, results) => {
+        if (err) {
+            console.error("Erreur lors de la récupération des copies :", err);
+            return res.status(500).json({ message: "Erreur lors de la récupération des copies" });
+        }
+        res.json(results);
+    });
+});
+
+// Mise à jour de la note finale d'une copie
+app.put("/copies/:id", (req, res) => {
+    const { finalGrade, corrected_by } = req.body; // Récupérer la note et l'ID du professeur envoyés dans la requête
+    const { id } = req.params; // Récupérer l'ID de la copie à partir de l'URL
+
+    // Vérifier que la note finale et l'ID du professeur sont présents
+    if (finalGrade === undefined || corrected_by === undefined) {
+        return res.status(400).json({ message: "La note finale et l'ID du professeur sont requis" });
+    }
+
+    const checkQuery = `
+        SELECT * FROM grades WHERE submission_id = ?
+    `;
+    
+    // Vérifier si la note existe déjà dans la table grades
+    db.query(checkQuery, [id], (err, result) => {
+        if (err) {
+            console.error("Erreur lors de la vérification de la note :", err);
+            return res.status(500).json({ message: "Erreur lors de la vérification de la note" });
+        }
+
+        if (result.length > 0) {
+            // Si la note existe déjà, mettez à jour la note
+            const updateQuery = `
+                UPDATE grades
+                SET grade = ?, corrected_by = ?
+                WHERE submission_id = ?
+            `;
+            db.query(updateQuery, [finalGrade, corrected_by, id], (err, result) => {
+                if (err) {
+                    console.error("Erreur lors de la mise à jour de la note :", err);
+                    return res.status(500).json({ message: "Erreur lors de la mise à jour de la note" });
+                }
+
+                if (result.affectedRows === 0) {
+                    return res.status(404).json({ message: "Copie non trouvée ou note déjà mise à jour" });
+                }
+
+                res.json({ message: "Note finale mise à jour avec succès" });
+            });
+        } else {
+            // Si la note n'existe pas, insérez une nouvelle note
+            const insertQuery = `
+                INSERT INTO grades (submission_id, grade, corrected_by)
+                VALUES (?, ?, ?)
+            `;
+            db.query(insertQuery, [id, finalGrade, corrected_by], (err, result) => {
+                if (err) {
+                    console.error("Erreur lors de l'insertion de la note :", err);
+                    return res.status(500).json({ message: "Erreur lors de l'insertion de la note" });
+                }
+
+                res.json({ message: "Note finale insérée avec succès" });
+            });
+        }
+    });
+});
+
+
+// Route pour obtenir les statistiques
+app.get('/stats', (req, res) => {
+    const teacherId = req.query.teacherId; // Récupérer l'ID depuis les query params
+
+    if (!teacherId) {
+        return res.status(400).json({ message: "ID du professeur manquant" });
+    }
+
+    const statsQuery = `
+        SELECT 
+            (SELECT COUNT(*) FROM exams WHERE teacher_id = ?) AS totalExams, 
+            (SELECT COUNT(*) 
+            FROM submissions s 
+            JOIN exams e ON s.exam_id = e.id 
+            WHERE e.teacher_id = ?) AS copiesCorrigees
+    `;
+
+    db.query(statsQuery, [teacherId, teacherId], (err, result) => {
+        if (err) {
+            console.error("Erreur lors de la récupération des statistiques :", err);
+            return res.status(500).json({ message: "Erreur lors de la récupération des statistiques" });
+        }
+
+        res.json(result[0]);
+    });
+});
+
+
+
+// Route pour récupérer les examens
+app.get('/exams', (req, res) => {
+    const query = `
+      SELECT 
+        exams.id, 
+        exams.title, 
+        exams.deadline,
+        COUNT(submissions.id) AS copies
+      FROM exams
+      LEFT JOIN submissions ON exams.id = submissions.exam_id
+      GROUP BY exams.id
+    `;
+  
+    db.query(query, (err, result) => {
+      if (err) {
+        console.error("Erreur lors de la récupération des examens :", err);
+        return res.status(500).json({ message: "Erreur lors de la récupération des examens" });
+      }
+  
+      res.json(result);
+    });
+  });  
+
 // Suppression d'un sujet
 app.delete("/subjects/:id", (req, res) => {
     db.query("DELETE FROM exams WHERE id = ?", [req.params.id], (err) => {
