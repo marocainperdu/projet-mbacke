@@ -12,7 +12,7 @@ const Login = () => {
     e.preventDefault();
 
     try {
-      const response = await axios.post('http://sql.momokabil.duckdns.org:3000/login', { // Utiliser l'URL du backend
+      const response = await axios.post('http://localhost:5000/login', { // Utiliser l'URL du backend
         email,
         password,
       });
@@ -23,9 +23,9 @@ const Login = () => {
 
       // Redirigez vers le tableau de bord
       if (response.data.user.role === 'enseignant') {
-        navigate('/enseignant/dashboard'); // Redirige vers le tableau de bord enseignant
+        navigate('/dashboard'); // Redirige vers le tableau de bord enseignant
       } else {
-        navigate('/etudiant/dashboard'); // Redirige vers le tableau de bord etudiant
+        navigate('/dashboard'); // Redirige vers le tableau de bord etudiant
       }
 
     } catch (err) {

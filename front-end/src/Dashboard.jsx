@@ -2,12 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 const Dashboard = () => {
-  const teacher = {
-    firstName: 'Abdoul Aziz',
-    lastName: 'KANE',
-    email: 'kaneaboul551@gmail.com',
-  };
-
+  
+  const [user, setUser] = useState(null); // Nouvel état pour l'utilisateur
   const navigate = useNavigate();
   const [file, setFile] = useState(null);
   const [fileName, setFileName] = useState('');
@@ -15,12 +11,15 @@ const Dashboard = () => {
   const [stats, setStats] = useState(null); // Pour les statistiques
 
   useEffect(() => {
-    // Fonction pour récupérer les copies et les statistiques
-    const fetchData = async () => {
-      // ... (Récupérer les copies et les statistiques depuis l'API) ...
-    };
-    fetchData();
-  }, []);
+    const storedUser = localStorage.getItem('user');
+    if (storedUser) {
+      const parsedUser = JSON.parse(storedUser);
+      setUser(parsedUser);
+      console.log("User from localStorage:", parsedUser); // Ajout de console.log
+    }
+
+    // ... (récupération des données) ...
+}, []);
 
   const handleLogout = () => {
     localStorage.removeItem('token');
@@ -55,11 +54,11 @@ const Dashboard = () => {
       </header>
       <div style={styles.content}>
         <aside style={styles.sidebar}>
-          <div style={styles.teacherInfo}>
+        <div style={styles.teacherInfo}>
             <img src="https://cdn.pixabay.com/photo/2017/01/31/21/23/avatar-2027366_1280.png" alt="Avatar de l'enseignant" style={styles.avatar} />
-            <h2 style={{ color: 'black' }}>{teacher.firstName} {teacher.lastName}</h2>
-            <p style={{ color: 'black' }}>{teacher.email}</p>
-          </div>
+            <h2 style={{ color: 'black' }}>{user ? user.username : 'Nom d\'utilisateur'}</h2>
+            <p style={{ color: 'black' }}>{user ? user.email : 'email@example.com'}</p>
+        </div>
           <button onClick={handleLogout} style={styles.logoutButton}>Déconnexion</button>
         </aside>
         <main style={styles.mainContent}>
