@@ -94,6 +94,62 @@ app.delete("/notifications/:id", (req, res) => {
     });
 });
 
+
+
+// Ajout d'un examen
+app.post("/add-exam", (req, res, next) => {
+    upload.single("file")(req, res, (err) => {
+        if (err) {
+            return res.status(400).json({ error: "Erreur lors du téléchargement du fichier" });
+        }
+
+        const { title, description, teacher_id, deadline } = req.body;
+        const file_path = req.file ? `/uploads/${req.file.filename}` : null;
+
+        if (!title || !description || !teacher_id || !file_path || !deadline) {
+            return res.status(400).json({ error: "Tous les champs sont requis" });
+        }
+
+        db.query(
+            "INSERT INTO exams (title, description, teacher_id, deadline, file_path) VALUES (?, ?, ?, ?, ?)",
+            [title, description, teacher_id, deadline, file_path],
+            (err, result) => {
+                if (err) {
+                    console.error("Erreur SQL :", err);
+                    return res.status(500).json({ error: "Erreur lors de l'ajout de l'examen" });
+                }
+
+                // Envoi d'e-mails aux étudiants
+                const { sendEmail } = require('./emailService'); // Importez le service d'e-mails
+
+                db.query("SELECT email FROM users WHERE role = 'student'", (studentErr, studentResults) => {
+                    if (studentErr) {
+                        console.error("Erreur lors de la récupération des emails des étudiants:", studentErr);
+                        return res.status(500).json({ error: "Erreur lors de la récupération des emails des étudiants" });
+                    }
+
+                    const studentEmails = studentResults.map(student => student.email);
+
+                    //sendEmail(studentEmails, 'Nouvel examen disponible', `Un nouvel examen "${title}" a été déposé.`);
+
+                    try {
+                        sendEmail(studentEmails, 'Nouvel examen disponible', `Un nouvel examen "${title}" a été déposé.`);
+                    } catch (emailError) {
+                        console.error("Erreur lors de l'envoi de l'email :", emailError);
+                        return res.status(500).json({ error: "Erreur lors de l'envoi de l'email" });
+                    }
+
+                    res.json({ success: true, exam_id: result.insertId, file_path });
+                });
+            }
+        );
+    });
+});
+
+
+
+/*
+
 // Ajout d'un examen
 app.post("/add-exam", (req, res, next) => {
     upload.single("file")(req, res, (err) => {
@@ -121,6 +177,8 @@ app.post("/add-exam", (req, res, next) => {
       );
     });
   });
+
+  */
   
 // Récupération des examens
 app.get("/get-sujets", (req, res) => {

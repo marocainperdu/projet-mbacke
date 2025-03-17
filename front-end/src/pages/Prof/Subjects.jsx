@@ -92,22 +92,24 @@ const Subjects = () => {
   
   useEffect(() => {
     const fetchSubjects = async () => {
+      if (!teacherId) return; // Vérifie si teacherId est défini
+
       try {
-        const response = await fetch(`${apiUrl}/get-sujets`);
+        const response = await fetch(`${apiUrl}/get-mes-sujets?id=${teacherId}`);
         const data = await response.json();
-    
+
         if (response.ok) {
           setSubjects(data); // Mettre à jour l'état avec la liste des sujets
         } else {
-          console.error("Erreur lors de la récupération des sujets :", data.error);
+          console.error("Erreur lors de la récupération des sujets :", data.message);
         }
       } catch (error) {
         console.error("Erreur lors de la récupération des sujets", error);
       }
     };
-    
+
     fetchSubjects();
-  }, []);
+  }, [teacherId]); // Ajoute teacherId comme dépendance
 
   const handleOpen = () => setOpen(true);
   const handleClose = () => setOpen(false);
