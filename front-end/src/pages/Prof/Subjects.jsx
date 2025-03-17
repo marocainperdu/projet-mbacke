@@ -111,7 +111,6 @@ const Subjects = () => {
     fetchSubjects();
   }, [teacherId]); // Ajoute teacherId comme dépendance
 
-
   const handleOpen = () => setOpen(true);
   const handleClose = () => setOpen(false);
 
