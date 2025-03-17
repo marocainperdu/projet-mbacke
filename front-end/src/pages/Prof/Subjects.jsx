@@ -36,7 +36,7 @@ const Subjects = () => {
     file: null,
   });
   const [teacherId, setTeacherId] = useState(null);
-  const client = new Client().setEndpoint("https://41.82.59.121:453/v1").setProject("67cd9f540022aae0f0f5");
+  const client = new Client().setEndpoint("https://appwrite.momokabil.duckdns.org/v1").setProject("67cd9f540022aae0f0f5");
   const account = new Account(client);
   const [teacherName, setTeacherName] = useState(null);
 
