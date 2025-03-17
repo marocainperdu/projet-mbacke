@@ -1,1 +1,51 @@
+import os
+import difflib
+from collections import Counter
 
+# Fonction pour nettoyer le code (enlever les commentaires et les espaces inutiles)
+def clean_code(file_path):
+    with open(file_path, 'r') as f:
+        lines = f.readlines()
+
+    cleaned_lines = []
+    for line in lines:
+        # Supprimer les commentaires (simples et multi-lignes)
+        if "#" in line:
+            line = line.split("#")[0]
+        line = line.strip()  # Supprimer les espaces en trop
+        if line:  # Si la ligne n'est pas vide
+            cleaned_lines.append(line)
+
+    return cleaned_lines
+
+# Fonction pour calculer le score de similarité entre deux fichiers de code
+def calculate_similarity(file1, file2):
+    # Nettoyer le code des fichiers
+    code1 = clean_code(file1)
+    code2 = clean_code(file2)
+
+    # Comparaison de lignes en utilisant difflib (c'est-à-dire la méthode SequenceMatcher)
+    sequence_matcher = difflib.SequenceMatcher(None, code1, code2)
+    similarity_ratio = sequence_matcher.ratio()  # Retourne un score entre 0 et 1
+    return similarity_ratio
+
+# Fonction pour afficher les résultats de la comparaison
+def detect_plagiarism(file1, file2):
+    similarity_score = calculate_similarity(file1, file2)
+    
+    print(f"Le score de similarité entre {file1} et {file2} est : {similarity_score * 100:.2f}%")
+    
+    # Si la similarité est supérieure à un seuil (par exemple 80%), on considère qu'il y a plagiat
+    threshold = 0.8
+    if similarity_score > threshold:
+        print("Plagiat détecté !")
+    else:
+        print("Aucun plagiat détecté.")
+
+# Exemple d'utilisation
+if __name__ == "__main__":
+    # Remplace les chemins par ceux des fichiers que tu veux comparer
+    file1 = "code1.py"
+    file2 = "code2.py"
+    
+    detect_plagiarism(file1, file2)
