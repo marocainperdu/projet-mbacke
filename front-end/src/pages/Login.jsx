@@ -16,7 +16,7 @@ const theme = createTheme({
   });
 
 const client = new Client()
-  .setEndpoint("https://appwrite.momokabil.duckdns.org/v1")
+  .setEndpoint("https://41.82.59.121:453/v1")
   .setProject("67cd9f540022aae0f0f5");
 
 const account = new Account(client);

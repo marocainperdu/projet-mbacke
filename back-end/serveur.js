@@ -19,6 +19,21 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true })); // Pour parser les requêtes form-data
 
+function ensureConnection(callback) {
+    if (!db._protocol._socket || db._protocol._socket.destroyed) {
+        db.connect((err) => {
+            if (err) {
+                console.error("Erreur de connexion à la base de données :", err);
+                return callback(err, null);
+            }
+            console.log("Connexion rétablie !");
+            callback(null, db);
+        });
+    } else {
+        callback(null, db);
+    }
+}
+
 // Configuration de multer pour le téléchargement des fichiers
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
@@ -57,6 +72,15 @@ app.get('/get-teacher-id', (req, res) => {
     });
 });
 
+app.get('/get-student-id', (req, res) => {
+    const { name } = req.query;
+    db.query('SELECT id FROM users WHERE name = ?', [name], (err, result) => {
+        if (err) return res.status(500).json({ error: 'Erreur de base de données' });
+        if (result.length === 0) return res.status(404).json({ error: 'Utilisateur non trouvé' });
+        res.json({ student_id: result[0].id });
+    });
+});
+
 // Création d'un Utilisateur
 app.post("/api/new-user", async (req, res) => {
     const { email, password, name, role } = req.body;
@@ -69,28 +93,6 @@ app.post("/api/new-user", async (req, res) => {
     db.query(sql, [email, hashedPassword, name, role], (err, results) => {
         if (err) return res.status(500).json({ message: "Erreur lors de l'insertion dans la base de données" });
         res.status(201).json({ message: "Utilisateur ajouté avec succès", userId: results.insertId });
-    });
-});
-
-// Gestion des notifications
-app.get("/notifications", (req, res) => {
-    db.query("SELECT * FROM notifications ORDER BY created_at DESC", (err, results) => {
-        if (err) return res.status(500).json({ message: "Erreur lors de la récupération des notifications" });
-        res.json(results);
-    });
-});
-
-app.put("/notifications/:id/read", (req, res) => {
-    db.query("UPDATE notifications SET is_read = 1 WHERE id = ?", [req.params.id], (err) => {
-        if (err) return res.status(500).json({ message: "Erreur lors de la mise à jour de la notification" });
-        res.json({ message: "Notification marquée comme lue" });
-    });
-});
-
-app.delete("/notifications/:id", (req, res) => {
-    db.query("DELETE FROM notifications WHERE id = ?", [req.params.id], (err) => {
-        if (err) return res.status(500).json({ message: "Erreur lors de la suppression de la notification" });
-        res.json({ message: "Notification supprimée" });
     });
 });
 
@@ -124,11 +126,26 @@ app.post("/add-exam", (req, res, next) => {
   
 // Récupération des examens
 app.get("/get-sujets", (req, res) => {
+    const { id } = req.query;
     db.query("SELECT * FROM exams ORDER BY created_at DESC", (err, results) => {
         if (err) return res.status(500).json({ message: "Erreur lors de la récupération des sujets" });
         res.json(results);
     });
 });
+
+app.get("/get-mes-sujets", (req, res) => {
+    const { id } = req.query; // ou req.params selon comment tu l'envoies
+
+    if (!id) {
+        return res.status(400).json({ message: "ID du professeur requis" });
+    }
+
+    db.query("SELECT * FROM exams WHERE teacher_id = ? ORDER BY created_at DESC", [id], (err, results) => {
+        if (err) return res.status(500).json({ message: "Erreur lors de la récupération des sujets" });
+        res.json(results);
+    });
+});
+
 
 // Récupération des copies des étudiants
 app.get("/get-copies", (req, res) => {
@@ -260,10 +277,10 @@ app.get('/exams', (req, res) => {
         exams.id, 
         exams.title, 
         exams.deadline,
-        COUNT(submissions.id) AS copies
-      FROM exams
-      LEFT JOIN submissions ON exams.id = submissions.exam_id
-      GROUP BY exams.id
+        COUNT(DISTINCT submissions.id) AS copies
+        FROM exams
+        LEFT JOIN submissions ON exams.id = submissions.exam_id
+        GROUP BY exams.id, exams.title, exams.deadline;
     `;
   
     db.query(query, (err, result) => {
@@ -282,6 +299,58 @@ app.delete("/subjects/:id", (req, res) => {
         if (err) return res.status(500).json({ message: "Erreur lors de la suppression du sujet" });
         res.json({ message: "Sujet supprimé avec succès" });
     });
+});
+
+app.get("/exams/pending", (req, res) => {
+    const query = `
+        SELECT COUNT(*) AS count 
+        FROM exams
+    `;
+
+    db.query(query, (err, result) => {
+        if (err) {
+            console.error("Erreur lors de la récupération des examens en attente :", err);
+            return res.status(500).json({ error: "Erreur lors de la récupération des examens en attente" });
+        }
+
+        res.json({ pending_exams: result[0].count });
+    });
+});
+
+
+app.get("/exams/submitted", (req, res) => {
+    try {
+        const result = db.query(`
+            SELECT COUNT(DISTINCT exam_id) AS count 
+            FROM submissions
+        `);
+        
+        if (result && result[0]) {
+            res.json({ submitted_exams: result[0].count });
+        } else {
+            res.status(404).json({ error: "No submitted exams found." });
+        }
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+app.get("/exams/mine", (req, res) => {
+    const userId = req.user.id;
+    try {
+        const exams = db.query(`
+            SELECT * FROM exams 
+            WHERE teacher_id = ?
+        `, [userId]);
+        
+        if (exams && exams.length > 0) {
+            res.json({ exams });
+        } else {
+            res.status(404).json({ error: "No exams found for this teacher." });
+        }
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
 });
 
 // Démarrage du serveur

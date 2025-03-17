@@ -36,7 +36,7 @@ const Papers = () => {
   const [selectedExam, setSelectedExam] = useState("");
   const [teacherName, setTeacherName] = useState(""); // Nom du professeur
   const [teacherId, setTeacherId] = useState(null); // ID du professeur
-  const client = new Client().setEndpoint("https://appwrite.momokabil.duckdns.org/v1").setProject("67cd9f540022aae0f0f5");
+  const client = new Client().setEndpoint("https://41.82.59.121:453/v1").setProject("67cd9f540022aae0f0f5");
   const account = new Account(client);
 
 
@@ -63,9 +63,12 @@ const Papers = () => {
 
   useEffect(() => {
     const fetchExams = async () => {
+      if (!teacherId) return; // Vérifie si teacherId est défini
+
       try {
-        const response = await fetch(`${API_URL}/get-sujets`);
+        const response = await fetch(`${API_URL}/get-mes-sujets?id=${teacherId}`);
         const data = await response.json();
+        
         if (response.ok) {
           setExams(data);
         } else {
@@ -76,8 +79,10 @@ const Papers = () => {
         console.error(error);
       }
     };
+
     fetchExams();
-  }, []);
+  }, [teacherId]); // Déclenche l'effet lorsque teacherId change
+
 
     useEffect(() => {
       const fetchTeacherName = async () => {
