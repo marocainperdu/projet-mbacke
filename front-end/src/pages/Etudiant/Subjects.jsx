@@ -10,150 +10,156 @@ import {
   TableRow,
   Paper,
   Button,
-  MenuItem,
-  Select,
-  InputLabel,
-  FormControl,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
   TextField,
+  IconButton,
 } from "@mui/material";
-import UploadFileIcon from "@mui/icons-material/UploadFile";
+import DeleteIcon from "@mui/icons-material/Delete";
+import DownloadIcon from "@mui/icons-material/Download";
+import { Client, Account } from "appwrite";
 
-// URL de l'API
-const apiUrl = "http://localhost:3000"; // Remplace avec ton backend réel
+const formatDate = (dateString) => {
+  const date = new Date(dateString);
+  const options = { day: "numeric", month: "long", year: "numeric" };
+  return date.toLocaleDateString("fr-FR", options);
+};
 
-const Subject = () => {
-  const [exams, setExams] = useState([]); // Liste des examens disponibles
-  const [selectedExam, setSelectedExam] = useState(""); // Examen sélectionné
-  const [file, setFile] = useState(null); // Fichier sélectionné
-  const [submissions, setSubmissions] = useState([]); // Copies soumises
-  const studentId = 1; // Remplace par l'ID réel de l'étudiant connecté (à récupérer dynamiquement)
+const apiUrl = "http://localhost:3000"; // Remplace par l'URL de ton backend
 
-  // Récupérer la liste des examens disponibles
+const Subjects = () => {
+  const [open, setOpen] = useState(false);
+  const [subjects, setSubjects] = useState([]);
+  const [newSubject, setNewSubject] = useState({
+    title: "",
+    subject: "",
+    professor: "",
+    deadline: "",
+    description: "",
+    file: null,
+  });
+const [teacherId, setTeacherId] = useState(null);  // Nouveau state pour l'ID du professeur
+const client = new Client().setEndpoint("https://41.82.59.121:453/v1").setProject("67cd9f540022aae0f0f5");
+const account = new Account(client);
+const [teacherName, setTeacherName] = useState(null);
+useEffect(() => {
+  const today = new Date();
+  const nextWeek = new Date(today.setDate(today.getDate() + 7)); // Ajouter 7 jours à la date actuelle
+  const formattedDate = nextWeek.toISOString().split("T")[0]; // Formater au format YYYY-MM-DD
+  setNewSubject((prev) => ({
+    ...prev,
+    deadline: formattedDate, // Définir la date par défaut
+  }));
+}, []);
+
   useEffect(() => {
-    const fetchExams = async () => {
-      try {
-        const response = await fetch(`${apiUrl}/get-exams`);
-        const data = await response.json();
-        setExams(data);
-      } catch (error) {
-        console.error("Erreur lors de la récupération des examens", error);
-      }
-    };
-    fetchExams();
+    const today = new Date();
+    const nextWeek = new Date(today.setDate(today.getDate() + 7));
+    const formattedDate = nextWeek.toISOString().split("T")[0];
+    setNewSubject((prev) => ({
+      ...prev,
+      deadline: formattedDate,
+    }));
   }, []);
 
-  // Récupérer les copies déjà soumises par l'étudiant
+useEffect(() => {
+    const fetchTeacherName = async () => {
+        try {
+            const user = await account.get(); // Récupère l'utilisateur connecté
+            setTeacherName(user.name); // Stocke le nom de l'utilisateur (supposé être le nom du professeur)
+        } catch (error) {
+            console.error("Erreur lors de la récupération des infos de l'utilisateur :", error);
+        }
+    };
+
+    fetchTeacherName();
+}, []); // Exécute une fois à l'initialisation
+
+useEffect(() => {
+    if (!teacherName) return; // Ne fait rien si teacherName est null
+
+    const fetchTeacherId = async () => {
+        try {
+            const response = await fetch(`${apiUrl}/get-teacher-id?name=${encodeURIComponent(teacherName)}`);
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.error || "Erreur inconnue");
+            }
+
+            setTeacherId(data.teacher_id); // Met à jour teacherId avec la réponse
+        } catch (error) {
+            console.error("Erreur lors de la récupération de l'ID du professeur :", error);
+        }
+    };
+
+    fetchTeacherId();
+}, [teacherName]); // Exécute la requête chaque fois que teacherName est mis à jour
+
+
+
+  // Récupérer les sujets depuis le backend
   useEffect(() => {
-    const fetchSubmissions = async () => {
+    const fetchSubjects = async () => {
       try {
-        const response = await fetch(`${apiUrl}/get-submissions?student_id=${studentId}`);
+        const response = await fetch(`${apiUrl}/get-sujets`);
         const data = await response.json();
-        setSubmissions(data);
+        setSubjects(data);
       } catch (error) {
-        console.error("Erreur lors de la récupération des copies soumises", error);
+        console.error("Erreur lors de la récupération des sujets", error);
       }
     };
-    fetchSubmissions();
+    fetchSubjects();
   }, []);
 
-  // Gestion du fichier sélectionné
-  const handleFileChange = (event) => {
-    setFile(event.target.files[0]);
-  };
-
-  // Soumission de la copie
-  const handleSubmit = async () => {
-    if (!selectedExam || !file) {
-      alert("Veuillez sélectionner un devoir et un fichier.");
-      return;
-    }
-
-    const formData = new FormData();
-    formData.append("exam_id", selectedExam);
-    formData.append("student_id", studentId);
-    formData.append("file", file);
-
-    try {
-      const response = await fetch(`${apiUrl}/submit-copy`, {
-        method: "POST",
-        body: formData,
-      });
-
-      if (response.ok) {
-        alert("Copie soumise avec succès !");
-        setFile(null);
-        setSelectedExam("");
-      } else {
-        alert("Erreur lors de la soumission.");
-      }
-    } catch (error) {
-      console.error("Erreur lors de l'envoi du fichier", error);
-    }
-  };
+  newSubject.professor = teacherName; // Remplace le champ Professeur par le nom du professeur
 
   return (
     <Container>
       <Typography variant="h5" align="center" sx={{ mt: 3, mb: 3 }}>
-        📝 Soumission de Copies
-      </Typography>
-
-      {/* Sélection du devoir */}
-      <FormControl fullWidth sx={{ mb: 2 }}>
-        <InputLabel>Choisir un devoir</InputLabel>
-        <Select value={selectedExam} onChange={(e) => setSelectedExam(e.target.value)}>
-          {exams.map((exam) => (
-            <MenuItem key={exam.id} value={exam.id}>
-              {exam.title}
-            </MenuItem>
-          ))}
-        </Select>
-      </FormControl>
-
-      {/* Upload du fichier */}
-      <Button variant="contained" component="label" startIcon={<UploadFileIcon />} sx={{ mb: 2 }}>
-        Télécharger votre copie
-        <input type="file" hidden onChange={handleFileChange} />
-      </Button>
-
-      {/* Bouton de soumission */}
-      <Button variant="contained" color="primary" onClick={handleSubmit} sx={{ ml: 2 }}>
-        Envoyer la copie
-      </Button>
-
-      {/* Tableau des copies soumises */}
-      <Typography variant="h6" sx={{ mt: 4, mb: 2 }}>
-        📄 Vos copies soumises
+        📚 Sujets d'Examens
       </Typography>
 
       <TableContainer component={Paper} sx={{ width: "100%", overflowX: "auto" }}>
         <Table sx={{ minWidth: 800 }}>
           <TableHead>
             <TableRow>
-              <TableCell>Examen</TableCell>
-              <TableCell>Date de soumission</TableCell>
-              <TableCell>Fichier</TableCell>
+              <TableCell sx={{ width: "15%" }}>Titre</TableCell>
+              <TableCell sx={{ width: "15%" }}>Date limite</TableCell>
+              <TableCell sx={{ width: "25%" }}>Description</TableCell>
+              <TableCell sx={{ width: "10%" }}>Fichier</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
-            {submissions.length > 0 ? (
-              submissions.map((submission) => (
-                <TableRow key={submission.id}>
-                  <TableCell>{submission.exam_title}</TableCell>
-                  <TableCell>{new Date(submission.submitted_at).toLocaleDateString()}</TableCell>
+            {subjects.length > 0 ? (
+              subjects.map((subject) => (
+                <TableRow key={subject.id}>
+                  <TableCell>{subject.title}</TableCell>
+                  <TableCell>{formatDate(subject.deadline)}</TableCell>
+                  <TableCell sx={{ whiteSpace: "normal", wordWrap: "break-word" }}>
+                    {subject.description}
+                  </TableCell>
                   <TableCell>
-                    <Button
+                    {subject.file_path ? (
+                      <Button
                       variant="outlined"
-                      onClick={() => window.open(`${apiUrl}${submission.file_path}`, "_blank")}
-                    >
-                      Télécharger
-                    </Button>
+                      startIcon={<DownloadIcon />}
+                        onClick={() => window.open(`${apiUrl}${subject.file_path}`, "_blank")}
+                      >
+                        Télécharger
+                      </Button>
+                    ) : (
+                      "Aucun fichier"
+                    )}
                   </TableCell>
                 </TableRow>
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={3} align="center">
-                  Aucune copie soumise.
+                <TableCell colSpan={7} align="center">
+                  Aucun sujet disponible
                 </TableCell>
               </TableRow>
             )}
@@ -164,4 +170,4 @@ const Subject = () => {
   );
 };
 
-export default Subject;
+export default Subjects;

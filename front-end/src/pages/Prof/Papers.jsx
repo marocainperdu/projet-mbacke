@@ -223,7 +223,7 @@ const Papers = () => {
                       <Button
                         variant="outlined"
                         startIcon={<DownloadIcon />}
-                        onClick={() => window.open(copy.fileUrl, "_blank")}
+                        onClick={() => window.open(copy.submission_file, "_blank")}
                       >
                         Télécharger
                       </Button>

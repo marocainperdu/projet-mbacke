@@ -247,6 +247,30 @@ app.put("/copies/:id", (req, res) => {
     });
 });
 
+app.get("/get-submissions", (req, res) => {
+    const { student_id } = req.query;
+  
+    if (!student_id) {
+      return res.status(400).json({ error: "ID étudiant manquant." });
+    }
+  
+    const query = `
+      SELECT s.id, s.file_path, s.submitted_at, e.title AS exam_title
+      FROM submissions s
+      JOIN exams e ON s.exam_id = e.id
+      WHERE s.student_id = ?
+      ORDER BY s.submitted_at DESC
+    `;
+  
+    db.query(query, [student_id], (err, result) => {
+      if (err) {
+        console.error("Erreur SQL:", err);
+        return res.status(500).json({ error: "Erreur lors de la récupération des copies soumises." });
+      }
+  
+      res.status(200).json(result);
+    });
+  });  
 
 // Route pour obtenir les statistiques
 app.get('/stats', (req, res) => {
@@ -275,7 +299,29 @@ app.get('/stats', (req, res) => {
     });
 });
 
-
+app.post("/submit-copy", upload.single("file"), (req, res) => {
+    const { exam_id, student_id } = req.body;
+    const filePath = req.file ? `/uploads/${req.file.filename}` : null;
+  
+    if (!exam_id || !student_id || !filePath) {
+      return res.status(400).json({ error: "Données manquantes (examen, étudiant ou fichier)." });
+    }
+  
+    // Requête SQL pour insérer la soumission dans la base de données
+    const query = `
+      INSERT INTO submissions (exam_id, student_id, file_path, submitted_at)
+      VALUES (?, ?, ?, NOW())
+    `;
+  
+    db.query(query, [exam_id, student_id, filePath], (err, result) => {
+      if (err) {
+        console.error("Erreur SQL lors de la soumission de la copie :", err);
+        return res.status(500).json({ error: "Erreur lors de la soumission de la copie." });
+      }
+  
+      res.status(200).json({ message: "Copie soumise avec succès !" });
+    });
+  });
 
 // Route pour récupérer les examens
 app.get('/exams', (req, res) => {

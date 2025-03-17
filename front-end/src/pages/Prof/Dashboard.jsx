@@ -113,7 +113,7 @@ const DashboardProf = () => {
         <Grid item xs={12} sm={6}>
           <Card sx={{ backgroundColor: "#2ecc71", color: "white" }}>
             <CardContent>
-              <Typography variant="h5">Copies corrigées</Typography>
+              <Typography variant="h5">Copies Reçus</Typography>
               <Typography variant="h4">{stats.copiesCorrigees}</Typography>
             </CardContent>
           </Card>
