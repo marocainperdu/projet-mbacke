@@ -5,7 +5,6 @@ import {
   TableHead, TableRow, IconButton
 } from '@mui/material';
 import LogoutIcon from '@mui/icons-material/Logout';
-import AddIcon from '@mui/icons-material/Add';
 import axios from 'axios';
 import { Client, Account } from "appwrite"; // Import correct pour Appwrite
 

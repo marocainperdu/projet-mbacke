@@ -19,21 +19,6 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true })); // Pour parser les requêtes form-data
 
-function ensureConnection(callback) {
-    if (!db._protocol._socket || db._protocol._socket.destroyed) {
-        db.connect((err) => {
-            if (err) {
-                console.error("Erreur de connexion à la base de données :", err);
-                return callback(err, null);
-            }
-            console.log("Connexion rétablie !");
-            callback(null, db);
-        });
-    } else {
-        callback(null, db);
-    }
-}
-
 // Configuration de multer pour le téléchargement des fichiers
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
@@ -337,42 +322,6 @@ app.get("/exams/pending", (req, res) => {
 
         res.json({ pending_exams: result[0].count });
     });
-});
-
-
-app.get("/exams/submitted", (req, res) => {
-    try {
-        const result = db.query(`
-            SELECT COUNT(DISTINCT exam_id) AS count 
-            FROM submissions
-        `);
-        
-        if (result && result[0]) {
-            res.json({ submitted_exams: result[0].count });
-        } else {
-            res.status(404).json({ error: "No submitted exams found." });
-        }
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-});
-
-app.get("/exams/mine", (req, res) => {
-    const userId = req.user.id;
-    try {
-        const exams = db.query(`
-            SELECT * FROM exams 
-            WHERE teacher_id = ?
-        `, [userId]);
-        
-        if (exams && exams.length > 0) {
-            res.json({ exams });
-        } else {
-            res.status(404).json({ error: "No exams found for this teacher." });
-        }
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
 });
 
 // Démarrage du serveur
