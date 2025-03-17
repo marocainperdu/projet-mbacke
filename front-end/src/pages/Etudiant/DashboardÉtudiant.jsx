@@ -63,7 +63,7 @@ function useSession() {
 
       const client = new Client();
       client
-        .setEndpoint(process.env.REACT_APP_APPWRITE_ENDPOINT || 'https://appwrite.momokabil.duckdns.org/v1')
+        .setEndpoint(process.env.REACT_APP_APPWRITE_ENDPOINT || 'https://41.82.59.121:453/v1')
         .setProject(process.env.REACT_APP_APPWRITE_PROJECT || '67cd9f540022aae0f0f5');
       const account = new Account(client);
 
@@ -88,13 +88,6 @@ function useSession() {
 
   return user;
 }
-
-const Skeleton = styled('div')(({ theme, height }) => ({
-  backgroundColor: theme.palette.action.hover,
-  borderRadius: theme.shape.borderRadius,
-  height,
-  content: '" "',
-}));
 
 function DemoPageContent({ router }) {
   const { pathname } = router;
@@ -146,7 +139,7 @@ export default function DashboardLayoutBasic(props) {
     }
 
     const client = new Client();
-    client.setEndpoint('https://appwrite.momokabil.duckdns.org/v1').setProject('67cd9f540022aae0f0f5');
+    client.setEndpoint('https://41.82.59.121:453/v1').setProject('67cd9f540022aae0f0f5');
     const account = new Account(client);
 
     try {

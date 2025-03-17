@@ -12,7 +12,7 @@ import { Client, Account } from "appwrite"; // Import correct pour Appwrite
 const apiUrl = "http://localhost:3000"; // Remplace par ton API backend
 
 const client = new Client()
-  .setEndpoint("https://appwrite.momokabil.duckdns.org/v1")
+  .setEndpoint("https://41.82.59.121:453/v1")
   .setProject("67cd9f540022aae0f0f5");
 
 const account = new Account(client);
@@ -106,7 +106,7 @@ const DashboardProf = () => {
         <Grid item xs={12} sm={6}>
           <Card sx={{ backgroundColor: "#3498db", color: "white" }}>
             <CardContent>
-              <Typography variant="h5">Examens</Typography>
+              <Typography variant="h5">Mes Examens</Typography>
               <Typography variant="h4">{stats.totalExams}</Typography>
             </CardContent>
           </Card>
@@ -124,7 +124,7 @@ const DashboardProf = () => {
       {/* Liste des examens */}
       <Paper elevation={3} sx={{ marginTop: 4, padding: 2 }}>
         <Typography variant="h6" gutterBottom>
-          Mes Examens
+          Examens de la classe
         </Typography>
         <TableContainer>
           <Table>

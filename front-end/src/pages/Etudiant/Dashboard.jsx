@@ -11,16 +11,16 @@ import { Client, Account } from "appwrite";
 const apiUrl = "http://localhost:3000"; // Remplace par ton API backend
 
 const client = new Client()
-  .setEndpoint("https://appwrite.momokabil.duckdns.org/v1")
+  .setEndpoint("https://41.82.59.121:453/v1")
   .setProject("67cd9f540022aae0f0f5");
 
-const account = new Account(client); 
+const account = new Account(client);
 
 const DashboardEtudiant = () => {
   const [studentName, setStudentName] = useState(""); // Nom de l'étudiant
   const [studentId, setStudentId] = useState(null); // ID de l'étudiant
   const [stats, setStats] = useState({
-    totalExams: 0,
+    examsToDo: 0,
     examsSubmitted: 0
   });
   const [exams, setExams] = useState([]);
@@ -39,41 +39,52 @@ const DashboardEtudiant = () => {
     fetchStudentName();
   }, []);
 
-  // Récupération de l'ID de l'étudiant
   useEffect(() => {
     if (!studentName) return;
 
-    const fetchStudentId = async () => {
+  const fetchStudentId = async () => {
+    try {
+      const response = await fetch(`${apiUrl}/get-student-id?name=${encodeURIComponent(studentName)}`);
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Erreur inconnue");
+      } 
+
+      setStudentId(data.student_id); // Stocke l'ID de l'étudiant
+    } catch (error) {
+      console.error("Erreur récupération ID étudiant :", error);
+    }
+  };
+
+  fetchStudentId();
+  }, []);
+
+  // Récupération des statistiques et des examens
+  useEffect(() => {
+    if (!studentName) return;
+
+    const fetchStatsAndExams = async () => {
       try {
-        const response = await fetch(`${apiUrl}/get-student-id?name=${encodeURIComponent(studentName)}`);
-        const data = await response.json();
+        const [examsToDoRes, examsSubmittedRes, examsRes] = await Promise.all([
+          axios.get(`${apiUrl}/exams/pending`),
+          axios.get(`${apiUrl}/exams/submitted`),
+          axios.get(`${apiUrl}/exams/mine`)
+        ]);
 
-        if (!response.ok) {
-          throw new Error(data.error || "Erreur inconnue");
-        }
+        setStats({
+          examsToDo: examsToDoRes.data.pending_exams,
+          examsSubmitted: examsSubmittedRes.data.submitted_exams
+        });
 
-        setStudentId(data.student_id); // Stocke l'ID de l'étudiant
+        setExams(Array.isArray(examsRes.data.exams) ? examsRes.data.exams : []);
       } catch (error) {
-        console.error("Erreur récupération ID étudiant :", error);
+        console.error("Erreur récupération données :", error);
       }
     };
 
-    fetchStudentId();
+    fetchStatsAndExams();
   }, [studentName]);
-
-  // Récupération des statistiques et des examens une fois l'ID obtenu
-  useEffect(() => {
-    if (!studentId) return;
-
-    axios.get(`${apiUrl}/student-stats?studentId=${studentId}`)
-      .then((res) => setStats(res.data))
-      .catch((err) => console.error("Erreur API stats :", err));
-
-    axios.get(`${apiUrl}/student-exams?studentId=${studentId}`)
-      .then((res) => setExams(Array.isArray(res.data) ? res.data : []))
-      .catch((err) => console.error("Erreur API exams :", err));
-
-  }, [studentId]);
 
   const handleLogout = () => {
     localStorage.removeItem('token');
@@ -106,7 +117,7 @@ const DashboardEtudiant = () => {
           <Card sx={{ backgroundColor: "#f39c12", color: "white" }}>
             <CardContent>
               <Typography variant="h5">Examens à faire</Typography>
-              <Typography variant="h4">{stats.totalExams}</Typography>
+              <Typography variant="h4">{stats.examsToDo}</Typography>
             </CardContent>
           </Card>
         </Grid>

@@ -24,8 +24,8 @@ const NAVIGATION = [
   { segment: 'dashboard', title: 'Dashboard', icon: <DashboardIcon /> },
   { kind: 'divider' },
   { kind: 'header', title: 'Examen' },
-  { segment: 'subjects', title: 'Sujets d\'Examen', icon: <LibraryBooksIcon /> },
-  { segment: 'papers', title: 'Copies et Corrections', icon: <AssignmentIcon /> },
+  { segment: 'subjects', title: 'Mes d\'Examen', icon: <LibraryBooksIcon /> },
+  { segment: 'papers', title: 'Copies', icon: <AssignmentIcon /> },
   { segment: 'plagiarism', title: 'Plagiat', icon: <ReportIcon /> },
   { kind: 'divider' },
   { kind: 'header', title: 'Support' },
@@ -72,8 +72,8 @@ function useSession() {
 
       const client = new Client();
       client
-        .setEndpoint(process.env.REACT_APP_APPWRITE_ENDPOINT || 'https://appwrite.momokabil.duckdns.org/v1')
-        .setProject(process.env.REACT_APP_APPWRITE_PROJECT || '67cd9f540022aae0f0f5');
+        .setEndpoint('https://41.82.59.121:453/v1')
+        .setProject('67cd9f540022aae0f0f5');
       const account = new Account(client);
 
       try {
@@ -97,13 +97,6 @@ function useSession() {
 
   return user;
 }
-
-const Skeleton = styled('div')(({ theme, height }) => ({
-  backgroundColor: theme.palette.action.hover,
-  borderRadius: theme.shape.borderRadius,
-  height,
-  content: '" "',
-}));
 
 function DemoPageContent({ router }) {
   const { pathname } = router;
@@ -157,7 +150,7 @@ export default function DashboardLayoutBasic(props) {
     }
 
     const client = new Client();
-    client.setEndpoint('https://appwrite.momokabil.duckdns.org/v1').setProject('67cd9f540022aae0f0f5');
+    client.setEndpoint('https://41.82.59.121:453/v1').setProject('67cd9f540022aae0f0f5');
     const account = new Account(client);
 
     try {
