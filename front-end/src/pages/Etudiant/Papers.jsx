@@ -15,6 +15,7 @@ import {
   InputLabel,
   FormControl,
 } from "@mui/material";
+import DownloadIcon from "@mui/icons-material/Download";
 import UploadFileIcon from "@mui/icons-material/UploadFile";
 import SendIcon from '@mui/icons-material/Send';
 import { Client, Account } from "appwrite";
@@ -113,9 +114,22 @@ const Papers = () => {
   }, [studentId, selectedExam]);
 
   // Gestion du fichier sélectionné
-  const handleFileChange = (event) => {
-    setFile(event.target.files[0]);
-  };
+  // Gestion du fichier sélectionné
+const handleFileChange = (event) => {
+  const selectedFile = event.target.files[0];
+  
+  if (selectedFile) {
+    const fileType = selectedFile.type;
+
+    // Vérifier si le fichier est un PDF
+    if (fileType !== "application/pdf") {
+      alert("Veuillez télécharger un fichier PDF.");
+      setFile(null); // Réinitialiser le fichier si ce n'est pas un PDF
+    } else {
+      setFile(selectedFile); // Si c'est un PDF, on le garde
+    }
+  }
+};
 
   // Soumission de la copie
   const handleSubmit = async () => {
@@ -210,6 +224,7 @@ const Papers = () => {
                   <TableCell>{new Date(submission.submitted_at).toLocaleDateString()}</TableCell>
                   <TableCell>
                     <Button
+                      startIcon={<DownloadIcon />}
                       variant="outlined"
                       onClick={() => window.open(`${apiUrl}${submission.file_path}`, "_blank")}
                     >

@@ -5,7 +5,6 @@ import { useNavigate } from "react-router-dom";
 import { Client, Account } from 'appwrite';
 import { createTheme } from '@mui/material/styles';
 
-
 const theme = createTheme({
     palette: {
       mode: "dark",

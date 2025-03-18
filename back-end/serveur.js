@@ -5,6 +5,7 @@ const cors = require("cors");
 const bcrypt = require("bcrypt");
 const multer = require("multer");
 const path = require("path");
+const Groq = require('groq-sdk');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -47,6 +48,26 @@ db.connect((err) => {
     }
     console.log("✅ Connecté à MySQL");
 });
+
+const client = new Groq({
+    apiKey: process.env.GROQ_API_KEY, // Sécurisé avec dotenv
+  });
+
+app.post('/chat', async (req, res) => {
+    try {
+      const { message } = req.body;
+  
+      const response = await client.chat.completions.create({
+        model: 'mixtral-8x7b-32768',
+        messages: [{ role: 'user', content: message }],
+      });
+  
+      res.json({ reply: response.choices?.[0]?.message?.content || "Je n'ai pas compris." });
+    } catch (error) {
+      console.error('Erreur API Groq:', error);
+      res.status(500).json({ error: 'Erreur de connexion au chatbot' });
+    }
+  });
 
 app.get('/get-teacher-id', (req, res) => {
     const { name } = req.query;

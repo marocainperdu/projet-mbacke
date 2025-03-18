@@ -25,6 +25,7 @@ import SaveIcon from "@mui/icons-material/Save";
 import { Client, Account } from "appwrite";
 
 const INVALID_DATE_MESSAGE = "Date invalide";
+const apiUrl = "http://localhost:3000"; // Remplace par ton backend réel
 
 const Papers = () => {
   const [copies, setCopies] = useState([]);
@@ -223,7 +224,7 @@ const Papers = () => {
                       <Button
                         variant="outlined"
                         startIcon={<DownloadIcon />}
-                        onClick={() => window.open(copy.submission_file, "_blank")}
+                        onClick={() => window.open(`${apiUrl}${copy.submission_file}`, "_blank")}
                       >
                         Télécharger
                       </Button>

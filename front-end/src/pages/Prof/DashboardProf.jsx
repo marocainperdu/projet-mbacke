@@ -9,7 +9,6 @@ import PropTypes from 'prop-types';
 import Plagiarism from "./Plagiarism";
 import Subjects from './Subjects';
 import Papers from './Papers';
-import Chatbot from './Chatbot';
 import InsightsIcon from '@mui/icons-material/Insights';
 import Dashboard from './Dashboard';
 import { AppProvider } from '@toolpad/core/AppProvider';
@@ -27,9 +26,6 @@ const NAVIGATION = [
   { segment: 'subjects', title: 'Mes d\'Examen', icon: <LibraryBooksIcon /> },
   { segment: 'papers', title: 'Copies', icon: <AssignmentIcon /> },
   { segment: 'plagiarism', title: 'Plagiat', icon: <ReportIcon /> },
-  { kind: 'divider' },
-  { kind: 'header', title: 'Support' },
-  { segment: 'chatbot', title: 'Mbacke-AI', icon: <InsightsIcon /> },
 ];
 
 // --- Configuration du thème ---
@@ -117,7 +113,6 @@ function DemoPageContent({ router }) {
       {pathname.startsWith('/subjects') ? <Subjects /> : null}
       {pathname.startsWith('/papers') ? <Papers /> : null}
       {pathname.startsWith('/plagiarism') ? <Plagiarism /> : null}
-      {pathname.startsWith('/chatbot') ? <Chatbot /> : null}
     </Box>
   );
 }

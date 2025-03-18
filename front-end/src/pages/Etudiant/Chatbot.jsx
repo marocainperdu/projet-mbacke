@@ -7,40 +7,50 @@ import {
 const Chatbot = () => {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
-  
-  // Détecter le mode sombre
+  const [loading, setLoading] = useState(false); // Ajout d'un état de chargement
+
   const theme = useTheme();
+  const apiURL = 'http://localhost:3000';
   const isDarkMode = theme.palette.mode === 'dark';
 
-  const handleSendMessage = () => {
-    if (input.trim() !== '') {
-      setMessages([...messages, { text: input, sender: 'user' }]);
-      setInput('');
-
-      // Simuler une réponse du chatbot après 1s
-      setTimeout(() => {
-        setMessages(prev => [...prev, { text: "Je suis un chatbot !", sender: 'bot' }]);
-      }, 1000);
+  const handleSendMessage = async () => {
+    if (!input.trim() || loading) return;
+  
+    const userMessage = { text: input, sender: 'user' };
+    setMessages(prev => [...prev, userMessage]);
+    setInput('');
+    setLoading(true);
+  
+    try {
+      const response = await fetch(`${apiURL}/chat`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: input }),
+      });
+  
+      const data = await response.json();
+      setMessages(prev => [...prev, { text: data.reply, sender: 'bot' }]);
+    } catch (error) {
+      console.error('Erreur:', error);
+      setMessages(prev => [...prev, { text: 'Erreur de connexion.', sender: 'bot' }]);
     }
+  
+    setLoading(false);
   };
+  
 
   return (
     <Container maxWidth="md">
-      {/* En-tête */}
       <AppBar position="static">
         <Toolbar>
           <Typography variant="h6">Chatbot</Typography>
         </Toolbar>
       </AppBar>
 
-      {/* Conteneur du chat */}
       <Paper 
         elevation={3} 
         sx={{ 
-          padding: 2, 
-          marginTop: 3, 
-          height: 400, 
-          overflowY: 'auto',
+          padding: 2, marginTop: 3, height: 400, overflowY: 'auto',
           backgroundColor: isDarkMode ? "#222" : "#fff", 
           color: isDarkMode ? "#fff" : "#000" 
         }}
@@ -53,9 +63,7 @@ const Chatbot = () => {
                 sx={{ 
                   backgroundColor: msg.sender === 'user' ? (isDarkMode ? "#444" : "#DCF8C6") : (isDarkMode ? "#555" : "#E0E0E0"), 
                   color: isDarkMode ? "#fff" : "#000",
-                  padding: 1, 
-                  borderRadius: 2, 
-                  display: 'inline-block'
+                  padding: 1, borderRadius: 2, display: 'inline-block'
                 }} 
               />
             </ListItem>
@@ -63,14 +71,10 @@ const Chatbot = () => {
         </List>
       </Paper>
 
-      {/* Champ de saisie */}
       <Paper 
         elevation={2} 
         sx={{ 
-          display: 'flex', 
-          alignItems: 'center', 
-          padding: 1, 
-          marginTop: 2, 
+          display: 'flex', alignItems: 'center', padding: 1, marginTop: 2, 
           backgroundColor: isDarkMode ? "#333" : "#fff" 
         }}
       >
@@ -90,9 +94,10 @@ const Chatbot = () => {
           variant="contained" 
           color="primary" 
           onClick={handleSendMessage}
+          disabled={loading} // Désactivation du bouton pendant le chargement
           sx={{ marginLeft: 1 }}
         >
-          Envoyer
+          {loading ? '...' : 'Envoyer'}
         </Button>
       </Paper>
     </Container>

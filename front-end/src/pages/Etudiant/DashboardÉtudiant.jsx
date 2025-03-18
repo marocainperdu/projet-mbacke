@@ -7,11 +7,13 @@ import PropTypes from 'prop-types';
 import Subjects from './Subjects';
 import Papers from './Papers';
 import Dashboard from './Dashboard';
+import Chatbot from './Chatbot';
 import { AppProvider } from '@toolpad/core/AppProvider';
 import { DashboardLayout } from '@toolpad/core/DashboardLayout';
 import Box from '@mui/material/Box';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Client, Account } from 'appwrite';
+import InsightsIcon from '@mui/icons-material/Insights';
 
 // --- Configuration de la navigation ---
 const NAVIGATION = [
@@ -21,6 +23,8 @@ const NAVIGATION = [
   { kind: 'header', title: 'Examen' },
   { segment: 'subjects', title: 'Sujets d\'Examen', icon: <LibraryBooksIcon /> },
   { segment: 'papers', title: 'Copies et Corrections', icon: <AssignmentIcon /> },
+  { kind: 'header', title: 'Support' },
+  { segment: 'chatbot', title: 'Mbacke-AI', icon: <InsightsIcon /> },
 ];
 
 // --- Configuration du thème ---
@@ -107,6 +111,7 @@ function DemoPageContent({ router }) {
       {pathname.startsWith('/tool') ? <Dashboard /> : null}
       {pathname.startsWith('/subjects') ? <Subjects /> : null}
       {pathname.startsWith('/papers') ? <Papers /> : null}
+      {pathname.startsWith('/chatbot') ? <Chatbot /> : null}
     </Box>
   );
 }

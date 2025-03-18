@@ -123,8 +123,21 @@ const Subjects = () => {
   };
 
   const handleFileChange = (e) => {
-    setNewSubject({ ...newSubject, file: e.target.files[0] });
+    const selectedFile = e.target.files[0];
+  
+    if (selectedFile) {
+      const fileType = selectedFile.type;
+  
+      // Vérifier si le fichier est un PDF
+      if (fileType !== "application/pdf") {
+        alert("Veuillez télécharger un fichier PDF.");
+        e.target.value = null; // Réinitialiser le champ de sélection de fichier
+      } else {
+        setNewSubject({ ...newSubject, file: selectedFile });
+      }
+    }
   };
+  
 
   const handleAddSubject = async () => {
     if (!newSubject.title || !newSubject.description || !teacherId || !newSubject.file) {
