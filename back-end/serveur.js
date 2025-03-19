@@ -53,21 +53,32 @@ const client = new Groq({
     apiKey: process.env.GROQ_API_KEY, // Sécurisé avec dotenv
   });
 
-app.post('/chat', async (req, res) => {
+  app.post('/chat', async (req, res) => {
     try {
       const { message } = req.body;
   
+      // Optionnel: Tronquer le message pour limiter le nombre de tokens (par exemple, à 512 tokens max)
+      const maxTokens = 512;  // Nombre maximum de tokens que tu veux utiliser
+      let truncatedMessage = message;
+  
+      if (message.length > maxTokens) {
+        truncatedMessage = message.slice(0, maxTokens);  // Tronquer le message
+      }
+  
+      // Appel à l'API avec LLaMA 70B
       const response = await client.chat.completions.create({
-        model: 'mixtral-8x7b-32768',
-        messages: [{ role: 'user', content: message }],
+        model: 'llama-3.1-8b-instant',  // Utiliser le modèle LLaMA 70B
+        messages: [{ role: 'user', content: truncatedMessage }],
       });
   
+      // Retourner la réponse
       res.json({ reply: response.choices?.[0]?.message?.content || "Je n'ai pas compris." });
     } catch (error) {
-      console.error('Erreur API Groq:', error);
+      console.error('Erreur API:', error);
       res.status(500).json({ error: 'Erreur de connexion au chatbot' });
     }
   });
+  
 
 app.get('/get-teacher-id', (req, res) => {
     const { name } = req.query;
