@@ -4,7 +4,6 @@ import DashboardIcon from '@mui/icons-material/Dashboard';
 import LibraryBooksIcon from '@mui/icons-material/LibraryBooks';
 import AssignmentIcon from '@mui/icons-material/Assignment';
 import ReportIcon from '@mui/icons-material/Report';
-import ChatIcon from '@mui/icons-material/Chat';
 import PropTypes from 'prop-types';
 import Plagiarism from "./Plagiarism";
 import Subjects from './Subjects';
@@ -16,6 +15,7 @@ import { DashboardLayout } from '@toolpad/core/DashboardLayout';
 import Box from '@mui/material/Box';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Client, Account } from 'appwrite';
+import Stats from "./Stats";
 
 // --- Configuration de la navigation ---
 const NAVIGATION = [
@@ -26,6 +26,7 @@ const NAVIGATION = [
   { segment: 'subjects', title: 'Mes d\'Examen', icon: <LibraryBooksIcon /> },
   { segment: 'papers', title: 'Copies', icon: <AssignmentIcon /> },
   { segment: 'plagiarism', title: 'Plagiat', icon: <ReportIcon /> },
+  { segment: 'statistiques', title: 'Statistiques', icon: <InsightsIcon /> },
 ];
 
 // --- Configuration du thème ---
@@ -113,6 +114,7 @@ function DemoPageContent({ router }) {
       {pathname.startsWith('/subjects') ? <Subjects /> : null}
       {pathname.startsWith('/papers') ? <Papers /> : null}
       {pathname.startsWith('/plagiarism') ? <Plagiarism /> : null}
+      {pathname.startsWith('/statistiques') ? <Stats /> : null}
     </Box>
   );
 }
