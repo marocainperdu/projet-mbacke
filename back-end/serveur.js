@@ -59,10 +59,13 @@ db.connect((err) => {
 });
 
 app.post("/grade-copy", (req, res) => {
-    const { text } = req.body;
+    const { text, submission_id, teacher_id } = req.body;
 
-    if (!text) {
-        return res.status(400).json({ error: "Texte manquant" });
+    console.log("📩 Requête reçue pour /grade-copy avec texte:", text.slice(0, 100) + "...");
+
+    if (!text || !submission_id || !teacher_id) {
+        console.error("❌ Données manquantes !");
+        return res.status(400).json({ error: "Texte, ID de soumission ou professeur manquant" });
     }
 
     const prompt = `
@@ -83,11 +86,34 @@ app.post("/grade-copy", (req, res) => {
         temperature: 0
     })
     .then((response) => {
+        console.log("🧠 Réponse IA brute:", response);
+
+        if (!response.choices || response.choices.length === 0) {
+            throw new Error("Réponse IA vide");
+        }
+
         const finalGrade = response.choices[0].message.content.trim();
-        res.json({ finalGrade });
+        console.log("✅ Note attribuée par l'IA :", finalGrade);
+
+        // 🔥 ➜ Mise à jour de la BD
+        const updateQuery = `
+            UPDATE grades
+            SET grade = ?, corrected_by = ?
+            WHERE submission_id = ?
+        `;
+
+        db.query(updateQuery, [finalGrade, teacher_id, submission_id], (err, result) => {
+            if (err) {
+                console.error("❌ Erreur SQL lors de la mise à jour :", err);
+                return res.status(500).json({ error: "Erreur lors de la mise à jour de la note" });
+            }
+
+            console.log("✅ Note mise à jour avec succès !");
+            res.json({ finalGrade });
+        });
     })
     .catch((error) => {
-        console.error("Erreur d'évaluation :", error);
+        console.error("❌ Erreur d'évaluation :", error);
         res.status(500).json({ error: "Erreur de notation par l'IA" });
     });
 });
@@ -316,27 +342,29 @@ app.get("/get-copies", (req, res) => {
 
 // Mise à jour de la note finale d'une copie
 app.put("/copies/:id", (req, res) => {
-    const { finalGrade, corrected_by } = req.body; // Récupérer la note et l'ID du professeur envoyés dans la requête
-    const { id } = req.params; // Récupérer l'ID de la copie à partir de l'URL
+    const { finalGrade, corrected_by } = req.body; 
+    const { id } = req.params; 
 
-    // Vérifier que la note finale et l'ID du professeur sont présents
+    console.log(`📩 Mise à jour de la copie ID: ${id}`);
+    console.log(`📊 Données reçues: Note = ${finalGrade}, Correcteur = ${corrected_by}`);
+
     if (finalGrade === undefined || corrected_by === undefined) {
+        console.error("❌ Données manquantes !");
         return res.status(400).json({ message: "La note finale et l'ID du professeur sont requis" });
     }
 
-    const checkQuery = `
-        SELECT * FROM grades WHERE submission_id = ?
-    `;
-    
-    // Vérifier si la note existe déjà dans la table grades
+    const checkQuery = `SELECT * FROM grades WHERE submission_id = ?`;
+
     db.query(checkQuery, [id], (err, result) => {
         if (err) {
-            console.error("Erreur lors de la vérification de la note :", err);
+            console.error("❌ Erreur MySQL lors de la vérification :", err);
             return res.status(500).json({ message: "Erreur lors de la vérification de la note" });
         }
 
+        console.log(`🔍 Résultat de la recherche :`, result);
+
         if (result.length > 0) {
-            // Si la note existe déjà, mettez à jour la note
+            console.log("📝 Mise à jour de la note...");
             const updateQuery = `
                 UPDATE grades
                 SET grade = ?, corrected_by = ?
@@ -344,33 +372,32 @@ app.put("/copies/:id", (req, res) => {
             `;
             db.query(updateQuery, [finalGrade, corrected_by, id], (err, result) => {
                 if (err) {
-                    console.error("Erreur lors de la mise à jour de la note :", err);
+                    console.error("❌ Erreur lors de la mise à jour :", err);
                     return res.status(500).json({ message: "Erreur lors de la mise à jour de la note" });
                 }
 
-                if (result.affectedRows === 0) {
-                    return res.status(404).json({ message: "Copie non trouvée ou note déjà mise à jour" });
-                }
-
+                console.log("✅ Mise à jour réussie :", result);
                 res.json({ message: "Note finale mise à jour avec succès" });
             });
         } else {
-            // Si la note n'existe pas, insérez une nouvelle note
+            console.log("➕ Insertion de la nouvelle note...");
             const insertQuery = `
                 INSERT INTO grades (submission_id, grade, corrected_by)
                 VALUES (?, ?, ?)
             `;
             db.query(insertQuery, [id, finalGrade, corrected_by], (err, result) => {
                 if (err) {
-                    console.error("Erreur lors de l'insertion de la note :", err);
+                    console.error("❌ Erreur lors de l'insertion :", err);
                     return res.status(500).json({ message: "Erreur lors de l'insertion de la note" });
                 }
 
+                console.log("✅ Insertion réussie :", result);
                 res.json({ message: "Note finale insérée avec succès" });
             });
         }
     });
 });
+
 
 app.get("/get-submissions", (req, res) => {
     const { student_id } = req.query;

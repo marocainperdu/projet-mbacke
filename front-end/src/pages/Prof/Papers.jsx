@@ -193,7 +193,11 @@ const Papers = () => {
         return fetch(`${API_URL}/grade-copy`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ text: extractedText }),
+          body: JSON.stringify({ 
+            text: extractedText,
+            submission_id: copy.submission_id, // Ajout de l'ID de la soumission
+            teacher_id: teacherId // Ajout de l'ID du professeur
+          }),
         });
       })
       .then((aiResponse) => {
@@ -211,7 +215,8 @@ const Papers = () => {
       .finally(() => {
         setLoading(false);
       });
-  };
+};
+
   
   
 
