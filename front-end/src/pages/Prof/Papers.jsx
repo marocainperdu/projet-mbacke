@@ -19,6 +19,7 @@ import {
   FormControl,
   InputLabel,
 } from "@mui/material";
+import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 import DownloadIcon from "@mui/icons-material/Download";
 import EditIcon from "@mui/icons-material/Edit";
 import SaveIcon from "@mui/icons-material/Save";
@@ -176,6 +177,44 @@ const Papers = () => {
     }
   };
 
+  const handleAutoCorrection = (copy, index) => {
+    setLoading(true); // Afficher un indicateur de chargement
+  
+    fetch(`${API_URL}/extract-text`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ submission_file: copy.submission_file }),
+    })
+      .then((extractResponse) => {
+        if (!extractResponse.ok) throw new Error("Erreur d'extraction du texte");
+        return extractResponse.json();
+      })
+      .then(({ extractedText }) => {
+        return fetch(`${API_URL}/grade-copy`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ text: extractedText }),
+        });
+      })
+      .then((aiResponse) => {
+        if (!aiResponse.ok) throw new Error("Erreur de notation par l'IA");
+        return aiResponse.json();
+      })
+      .then(({ finalGrade }) => {
+        let updatedCopies = [...copies];
+        updatedCopies[index].finalGrade = finalGrade;
+        setCopies(updatedCopies);
+      })
+      .catch((error) => {
+        alert("Erreur : " + error.message);
+      })
+      .finally(() => {
+        setLoading(false);
+      });
+  };
+  
+  
+
   return (
     <Container>
       <Typography variant="h5" align="center" sx={{ mt: 3, mb: 3 }}>
@@ -209,8 +248,8 @@ const Papers = () => {
                 <TableCell>Étudiant</TableCell>
                 <TableCell>Date de soumission</TableCell>
                 <TableCell>Fichier</TableCell>
+                <TableCell>Correction (IA)</TableCell>
                 <TableCell>Note finale</TableCell>
-                <TableCell>Commentaire</TableCell>
                 <TableCell>Actions</TableCell>
               </TableRow>
             </TableHead>
@@ -227,6 +266,11 @@ const Papers = () => {
                         onClick={() => window.open(`${apiUrl}${copy.submission_file}`, "_blank")}
                       >
                         Télécharger
+                      </Button>
+                    </TableCell>
+                    <TableCell>
+                      <Button startIcon={<AutoAwesomeIcon />} variant="outlined" color="secondary" onClick={() => handleAutoCorrection(copy, index)}>
+                        <Typography variant="button">Correction Magique</Typography>
                       </Button>
                     </TableCell>
                     <TableCell>
@@ -247,7 +291,6 @@ const Papers = () => {
                         "Pas de note"
                       )}
                     </TableCell>
-                    <TableCell>{copy.comment || "Aucun commentaire"}</TableCell>
                     <TableCell>
                       {editIndex === index ? (
                         <IconButton color="success" onClick={() => handleSave(index)}>

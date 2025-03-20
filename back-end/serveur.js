@@ -6,7 +6,8 @@ const bcrypt = require("bcrypt");
 const multer = require("multer");
 const path = require("path");
 const Groq = require('groq-sdk');
-
+const pdfParse = require("pdf-parse");
+const fs = require("fs");
 const app = express();
 const PORT = process.env.PORT || 3000;
 
@@ -48,6 +49,68 @@ db.connect((err) => {
     }
     console.log("✅ Connecté à MySQL");
 });
+
+app.post("/grade-copy", (req, res) => {
+    const { text } = req.body;
+
+    if (!text) {
+        return res.status(400).json({ error: "Texte manquant" });
+    }
+
+    const prompt = `
+    Voici une copie d'examen :
+    ${text}
+    
+    Évalue cette copie sur 20 en fonction de la qualité des réponses. 
+    Donne uniquement un nombre entre 0 et 20, sans explication.
+    `;
+
+    client.chat.completions.create({
+        model: "llama3-8b-8192",
+        messages: [
+            { role: "system", content: "Tu es un professeur qui corrige des copies." },
+            { role: "user", content: prompt }
+        ],
+        max_tokens: 10,
+        temperature: 0
+    })
+    .then((response) => {
+        const finalGrade = response.choices[0].message.content.trim();
+        res.json({ finalGrade });
+    })
+    .catch((error) => {
+        console.error("Erreur d'évaluation :", error);
+        res.status(500).json({ error: "Erreur de notation par l'IA" });
+    });
+});
+
+app.post("/extract-text", (req, res) => {
+    console.log("📥 Données reçues:", req.body);
+
+    const { submission_file } = req.body;
+
+    const filePath = path.join(__dirname, submission_file);
+
+    if (!fs.existsSync(filePath)) {
+        console.error("❌ Fichier introuvable :", filePath);
+        return res.status(404).json({ error: "Fichier non trouvé" });
+    }
+
+    console.log("📄 Lecture du fichier :", filePath);
+    const dataBuffer = fs.readFileSync(filePath);
+
+    pdfParse(dataBuffer)
+        .then((pdfData) => {
+            console.log("✅ Extraction réussie !");
+            res.json({ extractedText: pdfData.text });
+        })
+        .catch((error) => {
+            console.error("❌ Erreur d'extraction du texte :", error);
+            res.status(500).json({ error: "Erreur d'extraction du texte" });
+        });
+});
+
+
 
 const client = new Groq({
     apiKey: process.env.GROQ_API_KEY, // Sécurisé avec dotenv
