@@ -11,15 +11,23 @@ const fs = require("fs");
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// Configuration CORS plus permissive pour le développement
 app.use(cors({
-    origin: "http://localhost:5173", // Remplace par l'origine de ton frontend
-    methods: ["GET", "POST", "PUT", "DELETE"], 
-    allowedHeaders: ["Content-Type"]
+    origin: "*",
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization", "Accept"],
+    credentials: true
 }));
 
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true })); // Pour parser les requêtes form-data
+
+// Middleware pour logger les requêtes
+app.use((req, res, next) => {
+    console.log(`${new Date().toISOString()} - ${req.method} ${req.url}`);
+    next();
+});
 
 // Configuration de multer pour le téléchargement des fichiers
 const storage = multer.diskStorage({
@@ -143,11 +151,33 @@ const client = new Groq({
   });
   
 
+app.get('/health', (req, res) => {
+    res.json({ status: 'ok' });
+});
+
 app.get('/get-teacher-id', (req, res) => {
+    console.log("Requête get-teacher-id reçue");
     const { name } = req.query;
-    db.query('SELECT id FROM users WHERE name = ?', [name], (err, result) => {
-        if (err) return res.status(500).json({ error: 'Erreur de base de données' });
-        if (result.length === 0) return res.status(404).json({ error: 'Utilisateur non trouvé' });
+    
+    if (!name) {
+        return res.status(400).json({ error: 'Nom requis' });
+    }
+
+    const query = 'SELECT id FROM users WHERE name = ?';
+    console.log("Recherche de l'enseignant:", name);
+
+    db.query(query, [name], (err, result) => {
+        if (err) {
+            console.error("Erreur SQL:", err);
+            return res.status(500).json({ error: 'Erreur de base de données' });
+        }
+        
+        if (result.length === 0) {
+            console.log("Aucun enseignant trouvé pour le nom:", name);
+            return res.status(404).json({ error: 'Enseignant non trouvé' });
+        }
+        
+        console.log("Enseignant trouvé:", result[0]);
         res.json({ teacher_id: result[0].id });
     });
 });
@@ -466,140 +496,114 @@ app.get("/exams/pending", (req, res) => {
 });
 
 // Route pour les statistiques du professeur
-app.get("/api/professor/statistics", (req, res) => {
+app.get('/api/professor/statistics', async (req, res) => {
     const { teacher_id } = req.query;
 
     if (!teacher_id) {
-        return res.status(400).json({ error: "ID du professeur requis" });
+        return res.status(400).json({ error: 'ID du professeur requis' });
     }
 
-    // Requête pour obtenir le total des devoirs
-    const totalAssignmentsQuery = "SELECT COUNT(*) as total FROM exams WHERE teacher_id = ?";
-    
-    // Requête pour obtenir le nombre de devoirs rendus
-    const submittedAssignmentsQuery = `
-        SELECT COUNT(*) as submitted 
-        FROM submissions s 
-        JOIN exams e ON s.exam_id = e.id 
-        WHERE e.teacher_id = ?
-    `;
-
-    // Requête pour obtenir la moyenne générale
-    const averageScoreQuery = `
-        SELECT AVG(s.score) as average 
-        FROM submissions s 
-        JOIN exams e ON s.exam_id = e.id 
-        WHERE e.teacher_id = ? AND s.score IS NOT NULL
-    `;
-
-    // Requête pour obtenir la performance par matière
-    const subjectPerformanceQuery = `
-        SELECT e.title as name, AVG(s.score) as moyenne
-        FROM exams e
-        LEFT JOIN submissions s ON e.id = s.exam_id
-        WHERE e.teacher_id = ? AND s.score IS NOT NULL
-        GROUP BY e.id, e.title
-    `;
-
-    // Requête pour obtenir les statistiques de plagiat
-    const plagiarismStatsQuery = `
-        SELECT 
-            COUNT(*) as totalCases,
-            (COUNT(*) * 100.0 / (SELECT COUNT(*) FROM submissions s2 JOIN exams e2 ON s2.exam_id = e2.id WHERE e2.teacher_id = ?)) as percentageOfSubmissions
-        FROM submissions s
-        JOIN exams e ON s.exam_id = e.id
-        WHERE e.teacher_id = ? AND s.is_plagiarism = 1
-    `;
-
-    // Requête pour obtenir l'évolution dans le temps
-    const timelineDataQuery = `
-        SELECT 
-            DATE_FORMAT(s.submission_date, '%Y-%m-%d') as date,
-            AVG(s.score) as moyenne
-        FROM submissions s
-        JOIN exams e ON s.exam_id = e.id
-        WHERE e.teacher_id = ? AND s.score IS NOT NULL
-        GROUP BY DATE_FORMAT(s.submission_date, '%Y-%m-%d')
-        ORDER BY date
-    `;
-
-    // Requête pour obtenir la distribution des matières
-    const subjectDistributionQuery = `
-        SELECT 
-            e.title as name,
-            COUNT(s.id) as value
-        FROM exams e
-        LEFT JOIN submissions s ON e.id = s.exam_id
-        WHERE e.teacher_id = ?
-        GROUP BY e.id, e.title
-    `;
-
-    // Exécution des requêtes en parallèle
-    Promise.all([
-        new Promise((resolve, reject) => {
-            db.query(totalAssignmentsQuery, [teacher_id], (err, results) => {
+    try {
+        // Récupérer le nombre total d'examens
+        const totalExams = await new Promise((resolve, reject) => {
+            db.query('SELECT COUNT(*) as total FROM exams WHERE teacher_id = ?', [teacher_id], (err, results) => {
                 if (err) reject(err);
-                resolve(results[0].total);
+                resolve(results[0]?.total || 0);
             });
-        }),
-        new Promise((resolve, reject) => {
-            db.query(submittedAssignmentsQuery, [teacher_id], (err, results) => {
-                if (err) reject(err);
-                resolve(results[0].submitted);
-            });
-        }),
-        new Promise((resolve, reject) => {
-            db.query(averageScoreQuery, [teacher_id], (err, results) => {
-                if (err) reject(err);
-                resolve(results[0].average || 0);
-            });
-        }),
-        new Promise((resolve, reject) => {
-            db.query(subjectPerformanceQuery, [teacher_id], (err, results) => {
-                if (err) reject(err);
-                resolve(results);
-            });
-        }),
-        new Promise((resolve, reject) => {
-            db.query(plagiarismStatsQuery, [teacher_id, teacher_id], (err, results) => {
-                if (err) reject(err);
-                resolve(results[0]);
-            });
-        }),
-        new Promise((resolve, reject) => {
-            db.query(timelineDataQuery, [teacher_id], (err, results) => {
-                if (err) reject(err);
-                resolve(results);
-            });
-        }),
-        new Promise((resolve, reject) => {
-            db.query(subjectDistributionQuery, [teacher_id], (err, results) => {
-                if (err) reject(err);
-                resolve(results);
-            });
-        })
-    ])
-    .then(([totalAssignments, submittedAssignments, averageScore, subjectPerformance, plagiarismStats, timelineData, subjectDistribution]) => {
-        res.json({
-            totalAssignments,
-            submittedAssignments,
-            averageScore: Math.round(averageScore * 10) / 10,
-            subjectPerformance,
-            plagiarismStats: {
-                totalCases: plagiarismStats.totalCases,
-                percentageOfSubmissions: Math.round(plagiarismStats.percentageOfSubmissions * 10) / 10
-            },
-            timelineData,
-            subjectDistribution
         });
-    })
-    .catch(err => {
-        console.error("Erreur lors de la récupération des statistiques:", err);
-        res.status(500).json({ error: "Erreur lors de la récupération des statistiques" });
-    });
+
+        // Récupérer le nombre de soumissions
+        const totalSubmissions = await new Promise((resolve, reject) => {
+            db.query('SELECT COUNT(*) as total FROM submissions s JOIN exams e ON s.exam_id = e.id WHERE e.teacher_id = ?', [teacher_id], (err, results) => {
+                if (err) reject(err);
+                resolve(results[0]?.total || 0);
+            });
+        });
+
+        // Récupérer la moyenne des notes
+        const averageScore = await new Promise((resolve, reject) => {
+            db.query(`
+                SELECT AVG(g.grade) as average 
+                FROM grades g 
+                JOIN submissions s ON g.submission_id = s.id 
+                JOIN exams e ON s.exam_id = e.id 
+                WHERE e.teacher_id = ?
+            `, [teacher_id], (err, results) => {
+                if (err) reject(err);
+                resolve(results[0]?.average || 0);
+            });
+        });
+
+        // Récupérer les statistiques de plagiat
+        const plagiarismStats = await new Promise((resolve, reject) => {
+            db.query(`
+                SELECT COUNT(*) as total 
+                FROM plagiarism_reports pr 
+                JOIN submissions s ON pr.submission_id = s.id 
+                JOIN exams e ON s.exam_id = e.id 
+                WHERE e.teacher_id = ? AND pr.similarity_score > 80
+            `, [teacher_id], (err, results) => {
+                if (err) reject(err);
+                resolve({
+                    totalCases: results[0]?.total || 0,
+                    percentageOfSubmissions: totalSubmissions > 0 ? ((results[0]?.total || 0) / totalSubmissions) * 100 : 0
+                });
+            });
+        });
+
+        // Récupérer les performances par matière
+        const subjectPerformance = await new Promise((resolve, reject) => {
+            db.query(`
+                SELECT e.title, AVG(g.grade) as average_grade 
+                FROM exams e 
+                LEFT JOIN submissions s ON s.exam_id = e.id 
+                LEFT JOIN grades g ON g.submission_id = s.id 
+                WHERE e.teacher_id = ? 
+                GROUP BY e.title
+            `, [teacher_id], (err, results) => {
+                if (err) reject(err);
+                resolve(results || []);
+            });
+        });
+
+        // Récupérer les données temporelles
+        const timelineData = await new Promise((resolve, reject) => {
+            db.query(`
+                SELECT DATE(s.submitted_at) as date, COUNT(*) as submissions 
+                FROM submissions s 
+                JOIN exams e ON s.exam_id = e.id 
+                WHERE e.teacher_id = ? 
+                GROUP BY DATE(s.submitted_at) 
+                ORDER BY date DESC 
+                LIMIT 10
+            `, [teacher_id], (err, results) => {
+                if (err) reject(err);
+                resolve(results || []);
+            });
+        });
+
+        res.json({
+            totalExams,
+            totalSubmissions,
+            averageScore,
+            plagiarismStats,
+            subjectPerformance,
+            timelineData
+        });
+    } catch (error) {
+        console.error('Erreur lors de la récupération des statistiques:', error);
+        res.status(500).json({ error: 'Erreur lors de la récupération des statistiques' });
+    }
 });
 
-// Démarrage du serveur
-app.listen(PORT, () => {
-    console.log(`🚀 Serveur démarré : http://localhost:${PORT}`);
+// Démarrage du serveur avec gestion d'erreur
+const server = app.listen(PORT, () => {
+    console.log(`Serveur démarré sur le port ${PORT}`);
+}).on('error', (err) => {
+    if (err.code === 'EADDRINUSE') {
+        console.error(`Le port ${PORT} est déjà utilisé. Veuillez arrêter le serveur existant.`);
+    } else {
+        console.error('Erreur lors du démarrage du serveur:', err);
+    }
+    process.exit(1);
 });
