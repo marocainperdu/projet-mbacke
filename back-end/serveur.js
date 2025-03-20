@@ -465,6 +465,140 @@ app.get("/exams/pending", (req, res) => {
     });
 });
 
+// Route pour les statistiques du professeur
+app.get("/api/professor/statistics", (req, res) => {
+    const { teacher_id } = req.query;
+
+    if (!teacher_id) {
+        return res.status(400).json({ error: "ID du professeur requis" });
+    }
+
+    // Requête pour obtenir le total des devoirs
+    const totalAssignmentsQuery = "SELECT COUNT(*) as total FROM exams WHERE teacher_id = ?";
+    
+    // Requête pour obtenir le nombre de devoirs rendus
+    const submittedAssignmentsQuery = `
+        SELECT COUNT(*) as submitted 
+        FROM submissions s 
+        JOIN exams e ON s.exam_id = e.id 
+        WHERE e.teacher_id = ?
+    `;
+
+    // Requête pour obtenir la moyenne générale
+    const averageScoreQuery = `
+        SELECT AVG(s.score) as average 
+        FROM submissions s 
+        JOIN exams e ON s.exam_id = e.id 
+        WHERE e.teacher_id = ? AND s.score IS NOT NULL
+    `;
+
+    // Requête pour obtenir la performance par matière
+    const subjectPerformanceQuery = `
+        SELECT e.title as name, AVG(s.score) as moyenne
+        FROM exams e
+        LEFT JOIN submissions s ON e.id = s.exam_id
+        WHERE e.teacher_id = ? AND s.score IS NOT NULL
+        GROUP BY e.id, e.title
+    `;
+
+    // Requête pour obtenir les statistiques de plagiat
+    const plagiarismStatsQuery = `
+        SELECT 
+            COUNT(*) as totalCases,
+            (COUNT(*) * 100.0 / (SELECT COUNT(*) FROM submissions s2 JOIN exams e2 ON s2.exam_id = e2.id WHERE e2.teacher_id = ?)) as percentageOfSubmissions
+        FROM submissions s
+        JOIN exams e ON s.exam_id = e.id
+        WHERE e.teacher_id = ? AND s.is_plagiarism = 1
+    `;
+
+    // Requête pour obtenir l'évolution dans le temps
+    const timelineDataQuery = `
+        SELECT 
+            DATE_FORMAT(s.submission_date, '%Y-%m-%d') as date,
+            AVG(s.score) as moyenne
+        FROM submissions s
+        JOIN exams e ON s.exam_id = e.id
+        WHERE e.teacher_id = ? AND s.score IS NOT NULL
+        GROUP BY DATE_FORMAT(s.submission_date, '%Y-%m-%d')
+        ORDER BY date
+    `;
+
+    // Requête pour obtenir la distribution des matières
+    const subjectDistributionQuery = `
+        SELECT 
+            e.title as name,
+            COUNT(s.id) as value
+        FROM exams e
+        LEFT JOIN submissions s ON e.id = s.exam_id
+        WHERE e.teacher_id = ?
+        GROUP BY e.id, e.title
+    `;
+
+    // Exécution des requêtes en parallèle
+    Promise.all([
+        new Promise((resolve, reject) => {
+            db.query(totalAssignmentsQuery, [teacher_id], (err, results) => {
+                if (err) reject(err);
+                resolve(results[0].total);
+            });
+        }),
+        new Promise((resolve, reject) => {
+            db.query(submittedAssignmentsQuery, [teacher_id], (err, results) => {
+                if (err) reject(err);
+                resolve(results[0].submitted);
+            });
+        }),
+        new Promise((resolve, reject) => {
+            db.query(averageScoreQuery, [teacher_id], (err, results) => {
+                if (err) reject(err);
+                resolve(results[0].average || 0);
+            });
+        }),
+        new Promise((resolve, reject) => {
+            db.query(subjectPerformanceQuery, [teacher_id], (err, results) => {
+                if (err) reject(err);
+                resolve(results);
+            });
+        }),
+        new Promise((resolve, reject) => {
+            db.query(plagiarismStatsQuery, [teacher_id, teacher_id], (err, results) => {
+                if (err) reject(err);
+                resolve(results[0]);
+            });
+        }),
+        new Promise((resolve, reject) => {
+            db.query(timelineDataQuery, [teacher_id], (err, results) => {
+                if (err) reject(err);
+                resolve(results);
+            });
+        }),
+        new Promise((resolve, reject) => {
+            db.query(subjectDistributionQuery, [teacher_id], (err, results) => {
+                if (err) reject(err);
+                resolve(results);
+            });
+        })
+    ])
+    .then(([totalAssignments, submittedAssignments, averageScore, subjectPerformance, plagiarismStats, timelineData, subjectDistribution]) => {
+        res.json({
+            totalAssignments,
+            submittedAssignments,
+            averageScore: Math.round(averageScore * 10) / 10,
+            subjectPerformance,
+            plagiarismStats: {
+                totalCases: plagiarismStats.totalCases,
+                percentageOfSubmissions: Math.round(plagiarismStats.percentageOfSubmissions * 10) / 10
+            },
+            timelineData,
+            subjectDistribution
+        });
+    })
+    .catch(err => {
+        console.error("Erreur lors de la récupération des statistiques:", err);
+        res.status(500).json({ error: "Erreur lors de la récupération des statistiques" });
+    });
+});
+
 // Démarrage du serveur
 app.listen(PORT, () => {
     console.log(`🚀 Serveur démarré : http://localhost:${PORT}`);
