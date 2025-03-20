@@ -30,6 +30,7 @@ const apiUrl = "http://localhost:3000";
 
 const Stats = () => {
   const [loading, setLoading] = useState(true);
+  const [teacherId, setTeacherId] = useState(null);
   const [stats, setStats] = useState({
     totalAssignments: 0,
     submittedAssignments: 0,
@@ -49,14 +50,30 @@ const Stats = () => {
   const account = new Account(client);
 
   useEffect(() => {
-    fetchStatistics();
+    const fetchTeacherId = async () => {
+      try {
+        const session = await account.get();
+        const response = await fetch(`${apiUrl}/get-teacher-id?name=${session.name}`);
+        const data = await response.json();
+        setTeacherId(data.teacher_id);
+        if (data.teacher_id) {
+          fetchStatistics(data.teacher_id);
+        }
+      } catch (error) {
+        console.error("Erreur lors de la récupération de l'ID du professeur:", error);
+      }
+    };
+
+    fetchTeacherId();
   }, []);
 
-  const fetchStatistics = async () => {
+  const fetchStatistics = async (teacherId) => {
     try {
       setLoading(true);
-      // Simuler la récupération des données - À remplacer par de vraies requêtes API
-      const response = await fetch(`${apiUrl}/api/professor/statistics`);
+      const response = await fetch(`${apiUrl}/api/professor/statistics?teacher_id=${teacherId}`);
+      if (!response.ok) {
+        throw new Error('Erreur lors de la récupération des statistiques');
+      }
       const data = await response.json();
       setStats(data);
     } catch (error) {
