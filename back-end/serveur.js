@@ -58,6 +58,34 @@ db.connect((err) => {
     console.log("✅ Connecté à MySQL");
 });
 
+app.post("/compare-texts", (req, res) => {
+  const { text1, text2 } = req.body;
+
+  if (!text1 || !text2) {
+    return res.status(400).json({ error: "Les deux textes sont requis" });
+  }
+
+  try {
+    // Calculer la similarité cosinus (exemple simple)
+    const similarityScore = calculateCosineSimilarity(text1, text2);
+    res.json({ similarityScore });
+  } catch (error) {
+    console.error("❌ Erreur lors de la comparaison des textes :", error);
+    res.status(500).json({ error: "Erreur lors de la comparaison des textes" });
+  }
+});
+
+// Fonction pour calculer la similarité cosinus
+function calculateCosineSimilarity(text1, text2) {
+  const vector1 = text1.split(" ");
+  const vector2 = text2.split(" ");
+
+  const intersection = vector1.filter((word) => vector2.includes(word));
+  const similarity = (intersection.length / Math.sqrt(vector1.length * vector2.length)) * 100;
+
+  return Math.round(similarity * 100) / 100; // Arrondir à 2 décimales
+}
+
 app.post("/grade-copy", (req, res) => {
     const { text, submission_id, teacher_id } = req.body;
 
