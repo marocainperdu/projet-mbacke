@@ -1,98 +1,178 @@
--- Création de la base de données
+-- phpMyAdmin SQL Dump
+-- version 5.2.2
+-- https://www.phpmyadmin.net/
+--
+-- Host: db:3306
+-- Generation Time: Mar 23, 2025 at 11:56 PM
+-- Server version: 8.0.41
+-- PHP Version: 8.2.27
+
 CREATE DATABASE IF NOT EXISTS `mbacke-projet`;
 USE `mbacke-projet`;
 
--- Table `users` : Gestion des utilisateurs (enseignants et étudiants)
-CREATE TABLE IF NOT EXISTS `users` (
-    `id` INT AUTO_INCREMENT PRIMARY KEY,
-    `email` VARCHAR(255) NOT NULL UNIQUE,
-    `password` VARCHAR(255) NOT NULL,
-    `name` VARCHAR(255) NOT NULL,
-    `role` ENUM('teacher', 'student') NOT NULL,
-    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-);
+SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
+START TRANSACTION;
+SET time_zone = "+00:00";
 
--- Table `exams` : Gestion des examens créés par les enseignants
-CREATE TABLE IF NOT EXISTS `exams` (
-    `id` INT AUTO_INCREMENT PRIMARY KEY,
-    `title` VARCHAR(255) NOT NULL,
-    `description` TEXT,
-    `file_path` VARCHAR(255) NOT NULL,
-    `teacher_id` INT NOT NULL,
-    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (`teacher_id`) REFERENCES `users`(`id`) ON DELETE CASCADE
-);
 
--- Table `submissions` : Gestion des copies soumises par les étudiants
-CREATE TABLE IF NOT EXISTS `submissions` (
-    `id` INT AUTO_INCREMENT PRIMARY KEY,
-    `exam_id` INT NOT NULL,
-    `student_id` INT NOT NULL,
-    `file_path` VARCHAR(255) NOT NULL,
-    `submitted_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (`exam_id`) REFERENCES `exams`(`id`) ON DELETE CASCADE,
-    FOREIGN KEY (`student_id`) REFERENCES `users`(`id`) ON DELETE CASCADE
-);
+/*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
+/*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
+/*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;
+/*!40101 SET NAMES utf8mb4 */;
 
--- Table `grades` : Gestion des notes attribuées aux copies
-CREATE TABLE IF NOT EXISTS `grades` (
-    `id` INT AUTO_INCREMENT PRIMARY KEY,
-    `submission_id` INT NOT NULL,
-    `grade` FLOAT NOT NULL,
-    `comments` TEXT,
-    `corrected_by` INT NOT NULL,
-    `corrected_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (`submission_id`) REFERENCES `submissions`(`id`) ON DELETE CASCADE,
-    FOREIGN KEY (`corrected_by`) REFERENCES `users`(`id`) ON DELETE CASCADE
-);
+--
+-- Database: `mbacke-projet`
+--
 
--- Table `plagiarism_reports` : Gestion des rapports de plagiat
-CREATE TABLE IF NOT EXISTS `plagiarism_reports` (
-    `id` INT AUTO_INCREMENT PRIMARY KEY,
-    `submission_id` INT NOT NULL,
-    `similarity_score` FLOAT NOT NULL,
-    `report_path` VARCHAR(255) NOT NULL,
-    `generated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (`submission_id`) REFERENCES `submissions`(`id`) ON DELETE CASCADE
-);
+-- --------------------------------------------------------
 
--- Insertion de données de test
+--
+-- Table structure for table `exams`
+--
 
--- Utilisateurs
-INSERT INTO `users` (`email`, `password`, `role`) VALUES
-('teacher@example.com', '$2a$10$examplehash', 'teacher'), -- Mot de passe hashé
-('student@example.com', '$2a$10$examplehash', 'student'); -- Mot de passe hashé
+CREATE TABLE `exams` (
+  `id` int NOT NULL,
+  `title` varchar(255) NOT NULL,
+  `description` text,
+  `file_path` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
+  `teacher_id` int NOT NULL,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `deadline` timestamp NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
--- Examens
-INSERT INTO `exams` (`title`, `description`, `file_path`, `teacher_id`) VALUES
-('Examen de Mathématiques', 'Premier semestre', '/uploads/math.pdf', 1),
-('Examen de Physique', 'Deuxième semestre', '/uploads/physics.pdf', 1);
+-- --------------------------------------------------------
 
--- Soumissions
-INSERT INTO `submissions` (`exam_id`, `student_id`, `file_path`) VALUES
-(1, 2, '/uploads/copie1.pdf'),
-(2, 2, '/uploads/copie2.pdf');
+--
+-- Table structure for table `grades`
+--
 
--- Notes
-INSERT INTO `grades` (`submission_id`, `grade`, `comments`, `corrected_by`) VALUES
-(1, 15.5, 'Bon travail', 1),
-(2, 12.0, 'Peut mieux faire', 1);
+CREATE TABLE `grades` (
+  `id` int NOT NULL,
+  `submission_id` int NOT NULL,
+  `grade` float NOT NULL,
+  `comments` text,
+  `corrected_by` int NOT NULL,
+  `corrected_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
--- Rapports de plagiat
-INSERT INTO `plagiarism_reports` (`submission_id`, `similarity_score`, `report_path`) VALUES
-(1, 12.3, '/uploads/rapport1.pdf'),
-(2, 8.5, '/uploads/rapport2.pdf');
- -- Créer une procédure stockée pour générer le rapport mensuel
-CREATE PROCEDURE GenerateMonthlyExamReport AS BEGIN 
--- Créer une table temporaire pour stocker les données du rapport 
-CREATE TABLE #MonthlyExams ( Month VARCHAR(10), NumberOfExams INT ); 
--- Insérer le nombre d'examens créés par mois dans la table temporaire 
-INSERT INTO #MonthlyExams (Month, NumberOfExams) SELECT MONTH(created_at), COUNT(*) FROM exams WHERE created_at >= DATEADD(month, DATEDIFF(month, 0, GETDATE()), 0) AND created_at < DATEADD(month, DATEDIFF(month, 0, GETDATE()) + 1, 0) GROUP BY MONTH(created_at); 
--- Sélectionner les données du rapport 
-SELECT * FROM #MonthlyExams;
--- Supprimer la table temporaire
-DROP TABLE #MonthlyExams; END; GO
--- Exécuter la procédure stockée 
-EXEC GenerateMonthlyExamReport; 
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `submissions`
+--
+
+CREATE TABLE `submissions` (
+  `id` int NOT NULL,
+  `exam_id` int NOT NULL,
+  `student_id` int NOT NULL,
+  `file_path` varchar(255) NOT NULL,
+  `submitted_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `users`
+--
+
+CREATE TABLE `users` (
+  `id` int NOT NULL,
+  `email` varchar(255) NOT NULL,
+  `password` varchar(255) NOT NULL,
+  `name` varchar(255) NOT NULL,
+  `role` enum('teacher','student') NOT NULL,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+--
+-- Indexes for dumped tables
+--
+
+--
+-- Indexes for table `exams`
+--
+ALTER TABLE `exams`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `teacher_id` (`teacher_id`);
+
+--
+-- Indexes for table `grades`
+--
+ALTER TABLE `grades`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `submission_id` (`submission_id`),
+  ADD KEY `corrected_by` (`corrected_by`);
+
+--
+-- Indexes for table `submissions`
+--
+ALTER TABLE `submissions`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `exam_id` (`exam_id`),
+  ADD KEY `student_id` (`student_id`);
+
+--
+-- Indexes for table `users`
+--
+ALTER TABLE `users`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `email` (`email`);
+
+--
+-- AUTO_INCREMENT for dumped tables
+--
+
+--
+-- AUTO_INCREMENT for table `exams`
+--
+ALTER TABLE `exams`
+  MODIFY `id` int NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `grades`
+--
+ALTER TABLE `grades`
+  MODIFY `id` int NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `submissions`
+--
+ALTER TABLE `submissions`
+  MODIFY `id` int NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `users`
+--
+ALTER TABLE `users`
+  MODIFY `id` int NOT NULL AUTO_INCREMENT;
+
+--
+-- Constraints for dumped tables
+--
+
+--
+-- Constraints for table `exams`
+--
+ALTER TABLE `exams`
+  ADD CONSTRAINT `exams_ibfk_1` FOREIGN KEY (`teacher_id`) REFERENCES `users` (`id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `grades`
+--
+ALTER TABLE `grades`
+  ADD CONSTRAINT `grades_ibfk_1` FOREIGN KEY (`submission_id`) REFERENCES `submissions` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `grades_ibfk_2` FOREIGN KEY (`corrected_by`) REFERENCES `users` (`id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `submissions`
+--
+ALTER TABLE `submissions`
+  ADD CONSTRAINT `submissions_ibfk_1` FOREIGN KEY (`exam_id`) REFERENCES `exams` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `submissions_ibfk_2` FOREIGN KEY (`student_id`) REFERENCES `users` (`id`) ON DELETE CASCADE;
+COMMIT;
+
+/*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
+/*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
+/*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
