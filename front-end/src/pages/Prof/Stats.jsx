@@ -11,6 +11,7 @@ import {
   CardContent,
   Alert
 } from "@mui/material";
+import config from '../../config';
 import {
   BarChart,
   Bar,
@@ -45,8 +46,8 @@ const Stats = () => {
   });
 
   const client = new Client()
-    .setEndpoint("https://41.82.59.121:453/v1")
-    .setProject("67cd9f540022aae0f0f5");
+    .setEndpoint(config.apiEndpoint)
+    .setProject(config.projectId);
   const account = new Account(client);
 
   const checkServerConnection = async () => {
