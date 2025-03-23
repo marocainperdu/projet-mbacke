@@ -16,6 +16,7 @@ import Box from '@mui/material/Box';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Client, Account } from 'appwrite';
 import Stats from "./Stats";
+import config from '../../config';
 
 // --- Configuration de la navigation ---
 const NAVIGATION = [
@@ -69,8 +70,8 @@ function useSession() {
 
       const client = new Client();
       client
-        .setEndpoint('https://41.82.59.121:453/v1')
-        .setProject('67cd9f540022aae0f0f5');
+        .setEndpoint(config.apiEndpoint)
+        .setProject(config.projectId);
       const account = new Account(client);
 
       try {

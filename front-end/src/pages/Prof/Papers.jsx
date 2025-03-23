@@ -19,6 +19,7 @@ import {
   FormControl,
   InputLabel,
 } from "@mui/material";
+import config from '../../config';
 import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 import DownloadIcon from "@mui/icons-material/Download";
 import EditIcon from "@mui/icons-material/Edit";
@@ -38,7 +39,7 @@ const Papers = () => {
   const [selectedExam, setSelectedExam] = useState("");
   const [teacherName, setTeacherName] = useState(""); // Nom du professeur
   const [teacherId, setTeacherId] = useState(null); // ID du professeur
-  const client = new Client().setEndpoint("https://41.82.59.121:453/v1").setProject("67cd9f540022aae0f0f5");
+  const client = new Client().setEndpoint(config.apiEndpoint).setProject(config.projectId);
   const account = new Account(client);
 
 

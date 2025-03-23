@@ -14,6 +14,7 @@ import {
   Paper,
 } from "@mui/material";
 import { Client, Account } from "appwrite"; // Assure-toi d'importer correctement Appwrite
+import config from '../../config';
 
 const API_URL = "http://localhost:3000"; // Remplace par l'URL de ton API
 
@@ -47,8 +48,8 @@ const Plagiarism = () => {
 
   // Initialisation du client Appwrite
   const client = new Client()
-    .setEndpoint("https://41.82.59.121:453/v1")
-    .setProject("67cd9f540022aae0f0f5");
+    .setEndpoint(config.apiEndpoint)
+    .setProject(config.projectId);
   const account = new Account(client);
 
   // Récupérer le nom du professeur via Appwrite

@@ -2,6 +2,7 @@
 import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Client, Account } from 'appwrite';
+import config from '../config';
 
 const Logout = () => {
   const navigate = useNavigate();
@@ -9,7 +10,7 @@ const Logout = () => {
   useEffect(() => {
     const handleLogout = async () => {
       const client = new Client();
-      client.setEndpoint('https://41.82.59.121:453/v1').setProject('67cd9f540022aae0f0f5');
+      client.setEndpoint(config.apiEndpoint).setProject(config.projectId);
       const account = new Account(client);
 
       try {

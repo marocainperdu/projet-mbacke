@@ -1,20 +1,29 @@
-# Étape 1 : Utiliser une image de base Node.js
-FROM node:16
+# Étape 1: Utiliser une image Node.js pour construire l'application
+FROM node:18-alpine as build
 
-# Étape 2 : Définir le répertoire de travail
+# Étape 2: Définir le répertoire de travail dans le conteneur
 WORKDIR /app
 
-# Étape 3 : Copier les fichiers de dépendances
-COPY package.json yarn.lock ./
+# Étape 3: Copier les fichiers package.json et package-lock.json
+COPY package*.json ./
 
-# Étape 4 : Installer les dépendances
-RUN yarn install
+# Étape 4: Installer les dépendances nécessaires
+RUN npm install
 
-# Étape 5 : Copier le code source
+# Étape 5: Copier le reste des fichiers de l'application
 COPY . .
 
-# Étape 6 : Exposer le port 3000 (ou le port utilisé par votre backend)
-EXPOSE 3000
+# Étape 6: Construire l'application React pour la production
+RUN npm run build
 
-# Étape 7 : Démarrer l'application
-CMD ["yarn", "start"]
+# Étape 7: Utiliser une image Nginx pour servir l'application construite
+FROM nginx:alpine
+
+# Étape 8: Copier le build React vers le répertoire de Nginx pour le servir
+COPY --from=build /app/build /usr/share/nginx/html
+
+# Étape 9: Exposer le port 80 pour que l'application soit accessible
+EXPOSE 80
+
+# Étape 10: Lancer Nginx pour servir l'application
+CMD ["nginx", "-g", "daemon off;"]

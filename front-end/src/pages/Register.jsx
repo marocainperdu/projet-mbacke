@@ -13,10 +13,11 @@ import {
 import { Client, Account, ID } from "appwrite";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
 import { CssBaseline } from "@mui/material";
+import config from '../config';
 
 const client = new Client()
-  .setEndpoint("https://41.82.59.121:453/v1")
-  .setProject("67cd9f540022aae0f0f5");
+  .setEndpoint(config.apiEndpoint)
+  .setProject(config.projectId);
 
 const account = new Account(client);
 

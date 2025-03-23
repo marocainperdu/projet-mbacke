@@ -1,52 +1,13 @@
 import React, { useState } from 'react';
-import axios from 'axios';
 import { Container, Typography, TextField, Button, Alert, Box, ThemeProvider, Grid, Card, CircularProgress } from '@mui/material';
-import { CssBaseline } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import { Client, Account } from 'appwrite';
-import { createTheme } from '@mui/material/styles';
-
-
-
-const theme = createTheme({
-    palette: {
-        mode: "dark",
-        primary: { main: "#64b5f6" },
-        background: { default: "#ffffff", paper: "#212121" },
-        text: { primary: "#e0e0e0" },
-    },
-    components: {
-        MuiButton: {
-            styleOverrides: {
-                root: {
-                    textTransform: 'none',
-                    borderRadius: '8px',
-                    padding: '12px 24px',
-                    fontWeight: 600,
-                },
-            },
-        },
-        MuiTextField: {
-            styleOverrides: {
-                root: {
-                    '& .MuiOutlinedInput-root': {
-                        borderRadius: '8px',
-                    },
-                },
-            },
-        },
-    },
-});
-
+import config from '../config';
 
 const client = new Client()
-    .setEndpoint("https://41.82.59.121:453/v1")
-    .setProject("67cd9f540022aae0f0f5");
-
+    .setEndpoint(config.apiEndpoint)
+    .setProject(config.projectId);
 const account = new Account(client);
-
-
-
 
 function Login()  {
     const [email, setEmail] = useState('');

@@ -16,6 +16,7 @@ import {
   FormControl,
 } from "@mui/material";
 import DownloadIcon from "@mui/icons-material/Download";
+import config from '../../config';
 import UploadFileIcon from "@mui/icons-material/UploadFile";
 import SendIcon from '@mui/icons-material/Send';
 import { Client, Account } from "appwrite";
@@ -34,8 +35,8 @@ const Papers = () => {
 
   // Configuration Appwrite
   const client = new Client()
-    .setEndpoint("https://41.82.59.121:453/v1")
-    .setProject("67cd9f540022aae0f0f5");
+    .setEndpoint(config.apiEndpoint)
+    .setProject(config.projectId);
   const account = new Account(client);
 
   // Récupérer le nom de l'utilisateur depuis Appwrite
