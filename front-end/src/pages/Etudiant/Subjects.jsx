@@ -10,12 +10,6 @@ import {
   TableRow,
   Paper,
   Button,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  TextField,
-  IconButton,
 } from "@mui/material";
 import config from '../../config';
 import DownloadIcon from "@mui/icons-material/Download";
@@ -27,7 +21,7 @@ const formatDate = (dateString) => {
   return date.toLocaleDateString("fr-FR", options);
 };
 
-const apiUrl = "http://localhost:3000"; // Remplace par l'URL de ton backend
+const apiUrl = config.apiUrl; // Remplace par l'URL de ton backend
 
 const Subjects = () => {
   const [open, setOpen] = useState(false);

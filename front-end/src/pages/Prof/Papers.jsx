@@ -27,7 +27,7 @@ import SaveIcon from "@mui/icons-material/Save";
 import { Client, Account } from "appwrite";
 
 const INVALID_DATE_MESSAGE = "Date invalide";
-const apiUrl = "http://localhost:3000"; // Remplace par ton backend réel
+const apiUrl = config.apiUrl; // Remplace par ton backend réel
 
 const Papers = () => {
   const [copies, setCopies] = useState([]);
@@ -43,7 +43,7 @@ const Papers = () => {
   const account = new Account(client);
 
 
-  const API_URL = "http://localhost:3000";
+  const API_URL = config.apiUrl;
 
   const formatDate = (dateString) => {
     if (!dateString) {

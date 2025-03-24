@@ -9,7 +9,7 @@ import axios from 'axios';
 import { Client, Account } from "appwrite"; // Import correct pour Appwrite
 import config from '../../config';
 
-const apiUrl = "http://localhost:3000"; // Remplace par ton API backend
+const apiUrl = config.apiUrl; // Remplace par ton API backend
 
 const client = new Client()
   .setEndpoint(config.apiEndpoint)

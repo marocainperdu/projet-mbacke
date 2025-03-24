@@ -23,7 +23,7 @@ import AddIcon from "@mui/icons-material/Add";
 import { Client, Account } from "appwrite";
 import config from '../../config';
 
-const apiUrl = "http://localhost:3000"; // Remplace par l'URL de ton backend
+const apiUrl = config.apiUrl; // Remplace par l'URL de ton backend
 
 const Subjects = () => {
   const [open, setOpen] = useState(false);

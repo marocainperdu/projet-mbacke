@@ -2,6 +2,7 @@
 const config = {
   apiEndpoint: "${REACT_APP_API_URL}",
   projectId: "${REACT_APP_PROJECT_ID}",
+  apiUrl: "${REACT_APP_BACK_API}",
 };
 
 export default config;

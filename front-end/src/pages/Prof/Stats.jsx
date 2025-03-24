@@ -27,7 +27,7 @@ import {
   Cell
 } from "recharts";
 
-const apiUrl = "http://localhost:3000";
+const apiUrl = config.apiUrl;
 
 const Stats = () => {
   const [loading, setLoading] = useState(true);

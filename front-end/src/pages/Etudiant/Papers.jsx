@@ -22,7 +22,7 @@ import SendIcon from '@mui/icons-material/Send';
 import { Client, Account } from "appwrite";
 
 // URL de l'API
-const apiUrl = "http://localhost:3000"; // Remplace par ton backend réel
+const apiUrl = config.apiUrl; // Remplace par ton backend réel
 
 const Papers = () => {
   const [exams, setExams] = useState([]); // Liste des examens disponibles

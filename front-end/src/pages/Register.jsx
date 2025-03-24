@@ -15,6 +15,8 @@ import { createTheme, ThemeProvider } from "@mui/material/styles";
 import { CssBaseline } from "@mui/material";
 import config from '../config';
 
+const apiUrl = config.apiUrl; // Remplace par l'URL de ton backend
+
 const client = new Client()
   .setEndpoint(config.apiEndpoint)
   .setProject(config.projectId);
@@ -76,7 +78,7 @@ export default function Register() {
       const response = await account.create(ID.unique(), email, password, name);
       
       if (response) {
-        const apiResponse = await fetch("http://localhost:3000/api/new-user", {
+        const apiResponse = await fetch(`${apiUrl}/api/new-user`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({

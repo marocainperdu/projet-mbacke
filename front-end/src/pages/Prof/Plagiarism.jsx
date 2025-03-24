@@ -16,7 +16,7 @@ import {
 import { Client, Account } from "appwrite"; // Assure-toi d'importer correctement Appwrite
 import config from '../../config';
 
-const API_URL = "http://localhost:3000"; // Remplace par l'URL de ton API
+const API_URL = config.apiUrl; // Remplace par l'URL de ton API
 
 const Plagiarism = () => {
   // États pour les examens
