@@ -11,7 +11,7 @@ const Chatbot = () => {
   const [loading, setLoading] = useState(false); // Ajout d'un état de chargement
 
   const theme = useTheme();
-  const apiURL = 'http://localhost:3000';
+  const apiURL = config.apiUrl;
   const isDarkMode = theme.palette.mode === 'dark';
 
   const handleSendMessage = async () => {
