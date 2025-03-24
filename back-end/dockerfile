@@ -16,13 +16,5 @@ COPY . .
 # Étape 6: Exposer le port sur lequel l'application va tourner
 EXPOSE 3000
 
-# Étape 7: Définir les variables d'environnement (facultatif si définies dans docker-compose)
-# ENV DB_HOST=41.82.59.121
-# ENV DB_USER=root
-# ENV DB_PASSWORD=Blabla
-# ENV DB_NAME=mbacke-projet
-# ENV PORT=3000
-# ENV GROQ_API_KEY=Blabla
-
 # Étape 8: Lancer le serveur Node.js
 CMD ["node", "serveur.js"]

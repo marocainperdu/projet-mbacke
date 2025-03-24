@@ -1,27 +1,19 @@
 # Étape de construction
 FROM node:20 AS build
 
-# Définir les variables d'environnement via ARG
-ARG REACT_APP_API_URL
-ARG REACT_APP_PROJECT_ID
-ARG REACT_APP_BACK_API
-
-# Définir le répertoire de travail et copier les fichiers
+# Définir le répertoire de travail
 WORKDIR /app
+
+# Copier uniquement les fichiers nécessaires
+COPY package*.json ./
+COPY src/config.js.template ./src/config.js
 COPY . .
 
-# Utiliser envsubst pour générer config.js à partir de config.js.template
-RUN apt-get update && apt-get install -y gettext-base \
-    && envsubst < ./src/config.js.template > ./src/config.js
-
-# Installer les dépendances
-RUN npm install
-
-# Construire l'application
-RUN npm run build
+# Installer les dépendances et builder le projet
+RUN npm install && npm run build
 
 # Étape de production
-FROM nginx:alpine
+FROM nginx:1.21.6-alpine
 
 # Copier les fichiers construits de l'étape précédente
 COPY --from=build /app/dist /usr/share/nginx/html

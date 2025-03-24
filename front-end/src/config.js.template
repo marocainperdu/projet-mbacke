@@ -1,8 +1,6 @@
-// front-end/config.js.template
 const config = {
-  apiEndpoint: "${REACT_APP_API_URL}",
-  projectId: "${REACT_APP_PROJECT_ID}",
-  apiUrl: "${REACT_APP_BACK_API}",
+  apiEndpoint: "URL d'appwrite",
+  projectId: "l'ID du projet",
+  apiUrl: "L'URL du serveur d'API(Le conteneur du backend)"
 };
-
 export default config;
