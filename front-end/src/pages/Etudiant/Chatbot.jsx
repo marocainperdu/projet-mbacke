@@ -3,7 +3,7 @@ import {
   AppBar, Toolbar, Typography, Container, Paper, TextField, Button, 
   List, ListItem, ListItemText, useTheme 
 } from '@mui/material';
-import config from '../../config';
+import config from '../../conf';
 
 const Chatbot = () => {
   const [messages, setMessages] = useState([]);
