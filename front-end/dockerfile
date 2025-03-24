@@ -4,7 +4,7 @@ FROM node:20 AS build
 # Définir le répertoire de travail
 WORKDIR /app
 
-# Copier uniquement les fichiers nécessaires
+# Copier les fichiers nécessaires
 COPY package*.json ./
 COPY src/config.js.template ./src/config.js
 COPY . .
@@ -14,6 +14,9 @@ RUN npm install && npm run build
 
 # Étape de production
 FROM nginx:1.21.6-alpine
+
+# Copier le fichier nginx.conf personnalisé
+COPY nginx.conf /etc/nginx/nginx.conf
 
 # Copier les fichiers construits de l'étape précédente
 COPY --from=build /app/dist /usr/share/nginx/html
