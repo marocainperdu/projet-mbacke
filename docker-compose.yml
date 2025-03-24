@@ -3,16 +3,8 @@ services:
     build:
       context: ./front-end
       dockerfile: Dockerfile
-      args:
-        REACT_APP_API_URL: ${REACT_APP_API_URL}
-        REACT_APP_PROJECT_ID: ${REACT_APP_PROJECT_ID}
-        REACT_APP_BACK_API: ${REACT_APP_BACK_API}
     ports:
       - "80:80"
-    environment:
-      - REACT_APP_API_URL=${REACT_APP_API_URL}
-      - REACT_APP_PROJECT_ID=${REACT_APP_PROJECT_ID}
-      - REACT_APP_BACK_API=${REACT_APP_BACK_API}
     depends_on:
       - backend
 
