@@ -21,10 +21,10 @@ services:
     ports:
       - "3015:3000"
     environment:
-      - DB_HOST=${DB_HOST}
-      - DB_USER=${DB_USER}
-      - DB_PASSWORD=${DB_PASSWORD}
-      - DB_NAME=${DB_NAME}
-      - GROQ_API_KEY=${GROQ_API_KEY}
+      - DB_HOST=196.207.238.28
+      - DB_USER=root
+      - DB_PASSWORD=7C2742Regy8kCC9VKYoub2
+      - DB_NAME=mbacke-projet
+      - GROQ_API_KEY=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
     volumes:
       - ./back-end/uploads:/app/uploads

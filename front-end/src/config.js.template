@@ -1,6 +1,6 @@
 const config = {
-  apiEndpoint: "URL d'appwrite",
-  projectId: "l'ID du projet",
-  apiUrl: "L'URL du serveur d'API(Le conteneur du backend)"
+  apiEndpoint: "https://appwrite.momokabil.duckdns.org/v1",
+  projectId: "67cd9f540022aae0f0f5",
+  apiUrl: "http://192.168.1.200:3015"
 };
 export default config;
